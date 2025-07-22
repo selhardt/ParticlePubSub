@@ -1,0 +1,15 @@
+{
+    "extensions.ignoreRecommendations": true,
+    "C_Cpp.default.configurationProvider": "particle.particle-vscode-core",
+    "files.associations": {
+        "*.ino": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "random": "cpp"
+    },
+    "particle.firmwareVersion": "6.2.1",
+    "particle.targetPlatform": "boron",
+    "particle.targetDevice": "Pool_Fruit_Trees",
+    "cmake.sourceDirectory": "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/lib/ArduinoJson/src"
+}
