@@ -166,9 +166,18 @@ void handleIrrigationEvent(const char *event, const char *data) {
         return;
     }
 
+    //Check if message is for this deviceID
     const char* target = doc["device"];
     if (!target || strcmp(target, System.deviceID().c_str()) != 0) {
         printDebugMessage("⚠️ Irrigation event not for this device");
+        return;
+    }
+
+    //If irrigation already in progress, ignore new irrigation jobs
+    //Happens if manually triggered on NR AND then the 30 minute check sees the calendar event
+    //Could also happen if the calendar event is longer than 30 minutes 
+    if(irrigationState == RUNNING){
+        printDebugMessage("❌ Already irrigating - Ignoring Irrigation Event");
         return;
     }
 
@@ -326,7 +335,7 @@ void publishIrrigationProgress() {
     doc["status"] = "in_progress";
     doc["waterQty"] = (int)(pulseCount / PULSES_PER_GALLON);
     doc["fertQty"] = (int)(stepsSent / (120 * 200));  // integer oz estimate
-
+    printDebugMessage(String::format("📶 pulseCount: %lu", pulseCount));
     char payload[256];
     serializeJson(doc, payload);
     Particle.publish("irrigation_status", payload, PRIVATE);

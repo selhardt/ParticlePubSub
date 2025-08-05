@@ -10,6 +10,6 @@
     },
     "particle.firmwareVersion": "6.2.1",
     "particle.targetPlatform": "boron",
-    "particle.targetDevice": "Pool_Fruit_Trees",
+    "particle.targetDevice": "Pool_Palms_and_Flowers",
     "cmake.sourceDirectory": "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/lib/ArduinoJson/src"
 }

@@ -7,13 +7,28 @@
 //  7/15/25     12          Slowly implementing all check for device ID changes and fixing formatting of JSON's etc
 //  7/15/25     13          Added reboot function to Particle Dashboard and deleted NR reboot
 //  7/15/25     14          Stepper Particle Function
-//  7/18/25     20          Rewrite for GCal 2.0 Events
-
-
-// Strikeout CmdK - release, then delete
-
+//  7/18/25     20          Rewrite for GCal 2.0 Events - working at functional level, does not include status dashboard or influx
+//  7/22/25     20          Committed to main
+//  7/24/25     21          Added a check for irrigationState == RUNNING before accepting a new irrigation event in handleIrrigationEvent
+//  7/25/25     22          Working on bad status gallon values being reported to in-progress irrigation events
+//                          Added debug print for pulsecount to see why formula is not working as expected
+//                          TODO - debug further
+//                          Added check for bme280 on address 0x77 if not found on 0x76 (#2 is erroring)
+//                          Added irrigation state check = RUNNING for pulseCount increment
+//  *******************************************************************************************************************************************
+//  Names for Devices at bottom of screen for direct flash
+//  Name in VS Code             deviceID                        Relay Number            Relay Name
+//  Pool_Fruit_Trees            e00fce68db61e483e6b7a085        1,2,3,4,5,6,7           Fig,Orange,LizLemon,Vitex,3Bells,2Bells,MeyerLemon
+//  Pool_Palms_and_Flowers      e00fce68e12921ec4e2ff144        1,2,3,4,5,6,7           
+//  Garage_Flowers_and_Trees    e00fce687edca63b21266dfc
+//  softener_vavles             e00fce68f20c968df59370c6
+//  *******************************************************************************************************************************************
+// Strikeout CmdK - release, then press delete
+//  *******************************************************************************************************************************************
 //TODO
 //At the end of a dispense - return the Water quantity, pulses, MoonJoice Qty, rotations, water flow rate, moonjuice flow rate and elapsed time to dispense
+//Check that the final status update is done prior to ending moving on to next job
+//  *******************************************************************************************************************************************
 
 #include "Particle.h"
 #include "ArduinoJson.h"
@@ -22,14 +37,14 @@
 #include <Wire.h>
 
 //This must be directly programmed once prior to OTA updates
-PRODUCT_VERSION(20); // Increment this with each new upload
+PRODUCT_VERSION(22); // Increment this with each new upload
 
 // Designate GPIO pins
 // GPIO pin for flow sensor
 const int pulsePin = D2;
-// GPIO pin map for relays 1–4
+// GPIO pin map for water valve relays 1–7
 int relayPins[7] = {D8, D7, D6, D5, A0, A1, A2};
-// GPIO pin for stepper motor driver
+// GPIO pin for moonjuice stepper motor driver
 const int stepperPin = D4;
 int stepperSleep = D3;
 
@@ -89,8 +104,13 @@ const unsigned long statusInterval = 240000; // every 4 minutes
 char debugText[256];
 
 void pulseISR() {
-    pulseCount++;
-    lastPulseTime = millis();
+    //Only count pulses if the state is RUNNING
+    //This flow sensor will run on 2nd system in series so don't count those
+    //If it is counting and no other systems are irrigating - could be a leak
+    if(irrigationState==RUNNING){
+        pulseCount++;
+        lastPulseTime = millis();
+    }
 }
 
 void setup() {
@@ -119,15 +139,20 @@ void setup() {
 
     memset(debugText, 0, sizeof(debugText));
       // Initialize BME280 sensor
-    if (!bme.begin(0x76)) {  // Common I2C address: 0x76 or 0x77
-        printDebugMessage("❌ BME280 not found");
-    }
-    else
-    {
+
+    if (bme.begin(0x76)) {
+        Serial.println("✅ BME280 found at 0x76");
         bme280Error = false;
-        //printDebugMessage("✅ BME280 connected");
         tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
-        humidity = bme.readHumidity();     
+        humidity = bme.readHumidity(); 
+    } else if (bme.begin(0x77)) {
+        Serial.println("✅ BME280 found at 0x77");
+        bme280Error = false;
+        tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
+        humidity = bme.readHumidity(); 
+    } else {
+        Serial.println("❌ Could not find BME280 sensor at 0x76 or 0x77");
+        bme280Error = true;
     }
 
     //Particle Functions
@@ -161,10 +186,8 @@ void loop() {
             lastPulseTimeStepper = nowMicros;
 
             digitalWrite(stepperPin, HIGH);
-            //delayMicroseconds(1200);
             delayMicroseconds(STEPPER_DELAY_US);
             digitalWrite(stepperPin, LOW);
-            //delayMicroseconds(1200);
             delayMicroseconds(STEPPER_DELAY_US);
 
             stepsSent++;
@@ -202,7 +225,8 @@ void loop() {
         }
         // Completed irrigation water delivery
         if (pulseCount >= requiredPulses) {
-            publishIrrigationStatus("irrigation_complete");
+            publishIrrigationProgress();                        //Final update prior to completion
+            publishIrrigationStatus("irrigation_complete");     //Complete
             Serial.println("irrigation_complete");
             stopIrrigation();
             stopFertilizer();
