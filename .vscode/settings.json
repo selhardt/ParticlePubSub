@@ -8,8 +8,8 @@
         "string_view": "cpp",
         "random": "cpp"
     },
-    "particle.firmwareVersion": "6.2.1",
+    "particle.firmwareVersion": "6.3.3",
     "particle.targetPlatform": "boron",
-    "particle.targetDevice": "Pool_Palms_and_Flowers",
+    "particle.targetDevice": "Pool_Fruit_Trees",
     "cmake.sourceDirectory": "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/lib/ArduinoJson/src"
 }

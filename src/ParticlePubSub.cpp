@@ -20,13 +20,18 @@
 //                          TODO - debug further
 //                          Added check for bme280 on address 0x77 if not found on 0x76 (#2 is erroring)
 //                          Added irrigation state check = RUNNING for pulseCount increment
+//  8/5/25      23          Adding and debugging device sequencing
+//              24          Bugs in First Device Start
+//  8/6/25      25          Fixing First Device Start
+//  8/6/25      26          Commented out all Sequencing code - Think about publishing and listening on same node?
+//  8/6/25      27          FIx conversino to gallons in status update - seems to work
 //  *******************************************************************************************************************************************
 //  Names for Devices at bottom of screen for direct flash
 //  Name in VS Code             deviceID                        Relay Number            Relay Name
-//  Pool_Fruit_Trees            e00fce68db61e483e6b7a085        1,2,3,4,5,6,7           Fig,Orange,LizLemon,Vitex,3Bells,2Bells,MeyerLemon
-//  Pool_Palms_and_Flowers      e00fce68e12921ec4e2ff144        1,2,3,4,5,6,7           
-//  Garage_Flowers_and_Trees    e00fce687edca63b21266dfc
-//  softener_vavles             e00fce68f20c968df59370c6
+//  Pool_Fruit_Trees            e00fce68db61e483e6b7a085        1,2,3,4,5,6,7           Fig,Orange,LizLemon,MeyerLemon,3Bells,2Bells,Vitex
+//  Pool_Palms_and_Flowers      e00fce68e12921ec4e2ff144        1,2,3,4,5,6,7           Palm1,Palm2,BirdParadise,3Lantana,SmallPalm,BigPalmSteps,RosataPalm
+//  Garage_Flowers_and_Trees    e00fce687edca63b21266dfc        1,2,3,4,5,6,7           Tangelo,4Lantana,GarageMesquite,Ironwood,WestMesquite,MiddleMesquite,EastMesquite
+//  softener_vavles             e00fce68f20c968df59370c6        
 //  *******************************************************************************************************************************************
 // Strikeout CmdK - release, then press delete
 //  *******************************************************************************************************************************************
@@ -45,8 +50,8 @@
 void pulseISR();
 void setup();
 void loop();
-#line 40 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
-PRODUCT_VERSION(22); // Increment this with each new upload
+#line 45 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
+PRODUCT_VERSION(27); // Increment this with each new upload
 
 // Designate GPIO pins
 // GPIO pin for flow sensor
@@ -80,6 +85,10 @@ int currentJobIndex = 0;
 bool jobsPending = false;
 bool jobJustStarted = false;
 
+//Job Sequencing
+// DevicePosition devicePosition;
+// bool upstreamIdle;
+// String upstreamDevice;
 
 //Moon Juice state and tracking
 int requiredSteps = 0;
@@ -107,7 +116,7 @@ bool debugPrint = true;
 bool particlePrint = true;
 
 unsigned long lastStatusUpdate = 0;
-const unsigned long statusInterval = 240000; // every 4 minutes
+const unsigned long statusInterval = 300000; // every 5 minutes
 
 //Debug print array
 char debugText[256];
@@ -131,6 +140,21 @@ void setup() {
     waitUntil(Particle.connected);
     //printDebugMessage("✅ Particle cloud connected");
 
+//     //Job Sequencing Setup
+//     String thisDevice = System.deviceID();
+//     if (thisDevice == "e00fce68db61e483e6b7a085") {
+//         devicePosition = FIRST;
+//         upstreamDevice = "";  // None
+//     } else if (thisDevice == "e00fce68e12921ec4e2ff144") {
+//         devicePosition = SECOND;
+//         upstreamDevice = "e00fce68db61e483e6b7a085";
+//     } else if (thisDevice == "e00fce687edca63b21266dfc") {
+//         devicePosition = THIRD;
+//         upstreamDevice = "e00fce68e12921ec4e2ff144";
+//     } else {
+//     printDebugMessage("❌ Unknown device ID");
+// }
+
     // Set relay pins as outputs and turn off initially
     for (int i = 0; i < 7; i++) {
         pinMode(relayPins[i], OUTPUT);
@@ -153,13 +177,21 @@ void setup() {
         Serial.println("✅ BME280 found at 0x76");
         bme280Error = false;
         tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
-        humidity = bme.readHumidity(); 
-    } else if (bme.begin(0x77)) {
+        humidity = bme.readHumidity();
+        Serial.print("Temp = ");
+        Serial.println(tempF);
+    }
+    else if (bme.begin(0x77))
+    {
         Serial.println("✅ BME280 found at 0x77");
         bme280Error = false;
         tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
-        humidity = bme.readHumidity(); 
-    } else {
+        humidity = bme.readHumidity();
+        Serial.print("Temp = ");
+        Serial.println(tempF);
+    }
+    else
+    {
         Serial.println("❌ Could not find BME280 sensor at 0x76 or 0x77");
         bme280Error = true;
     }
@@ -176,7 +208,13 @@ void setup() {
     // Abort Irrigation
     Particle.subscribe("abortIrrigate", handleAbortEvent);
     //Announce being up
-    printDebugMessage("✅ Ready for irrigation events");
+    printDebugMessage("✅ Ready for irrigation events :-)");
+
+    Serial.print("firmware_version");
+    Serial.println(String::format("version: %d", __system_product_version));
+ 
+    // // Job Sequencin
+    // Particle.subscribe("deviceComm", handleDeviceComm);
 
 }
 
@@ -184,6 +222,11 @@ void loop() {
 
     unsigned long now = millis();
     Particle.process();
+
+    // if (irrigationState != RUNNING && jobsPending) {
+    //     startNextJob();     // Retry in case upstream just became idle
+    // }
+
     if (irrigationState == RUNNING)
     {
         //fertilizer stepper logic
@@ -234,7 +277,7 @@ void loop() {
         }
         // Completed irrigation water delivery
         if (pulseCount >= requiredPulses) {
-            publishIrrigationProgress();                        //Final update prior to completion
+            publishIrrigationProgress();                        //Final update prior to completion 
             publishIrrigationStatus("irrigation_complete");     //Complete
             Serial.println("irrigation_complete");
             stopIrrigation();

@@ -22,7 +22,9 @@ void printDebugMessagef(const char *format, ...);
 int splitString(const String &input, String output[], int maxParts);
 void startNextJob();
 void publishIrrigationProgress();
+// void handleDeviceComm(const char *event, const char *data);
+// void publishDeviceCommStatus(const char *status);
 
-//Particle Functions
+// Particle Functions
 int resetBoron(String cmd);
 int stepperRotations(String cmd);

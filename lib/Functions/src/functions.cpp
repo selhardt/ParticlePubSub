@@ -44,6 +44,10 @@ extern String jobDevice;
 extern unsigned long lastStatusUpdate;
 extern bool jobJustStarted;
 
+// extern bool upstreamIdle;
+// extern String upstreamDevice;
+// extern DevicePosition devicePosition;
+
 Adafruit_BME280 bme; // Define the object declared in the header
 
 //Particle Function - no need to check deviceID as sent from particle dashboard
@@ -113,7 +117,7 @@ void handleTempSensorRead(const char *event, const char *data) {
     const char* targetDevice = doc["device"];
 
     if (!targetDevice || String(targetDevice) != System.deviceID()) {
-        printDebugMessage("⚠️ Temp read ignored - device mismatch");
+        printDebugMessage("⚠️ Temp read ignored - device mismatchxxx");
         return;
     }
 
@@ -169,7 +173,7 @@ void handleIrrigationEvent(const char *event, const char *data) {
     //Check if message is for this deviceID
     const char* target = doc["device"];
     if (!target || strcmp(target, System.deviceID().c_str()) != 0) {
-        printDebugMessage("⚠️ Irrigation event not for this device");
+        //printDebugMessage("⚠️ Irrigation event not for this device");
         return;
     }
 
@@ -293,9 +297,16 @@ int splitString(const String& input, String output[], int maxParts) {
 void startNextJob() {
     lastStatusUpdate = millis();  // reset when new job starts
 
+    // // Only proceed if upstream is idle
+    // if (devicePosition != FIRST && !upstreamIdle) {
+    //     //printDebugMessage("⏳ Waiting for upstream device to become idle");
+    //     return;  // Will retry on next loop cycle
+    // }
+    
     if (currentJobIndex >= totalJobs) {
         jobsPending = false;
         printDebugMessage("✅ All irrigation jobs complete");
+        //publishDeviceCommStatus("idle");    //Device to device for sequencing
         return;
     }
 
@@ -324,7 +335,7 @@ void startNextJob() {
     jobJustStarted = true;
     startTime = millis();
     irrigationState = RUNNING;
-
+    //publishDeviceCommStatus("irrigating");  //device to device for sequencing
     publishIrrigationStatus("in_progress");
 }
 
@@ -333,11 +344,46 @@ void publishIrrigationProgress() {
     doc["device"] = System.deviceID();
     doc["relay"] = currentRelay + 1;
     doc["status"] = "in_progress";
-    doc["waterQty"] = (int)(pulseCount / PULSES_PER_GALLON);
+    doc["waterQty"] = (round)((double)pulseCount / (660.0 * 3.78541));
     doc["fertQty"] = (int)(stepsSent / (120 * 200));  // integer oz estimate
-    printDebugMessage(String::format("📶 pulseCount: %lu", pulseCount));
+    //printDebugMessage(String::format("📶 pulseCount: %lu", pulseCount));
     char payload[256];
     serializeJson(doc, payload);
     Particle.publish("irrigation_status", payload, PRIVATE);
     printDebugMessage(String::format("📶 Progress update: %s", payload));
 }
+
+// void handleDeviceComm(const char *event, const char *data) {
+//     JsonDocument doc;
+//     if (deserializeJson(doc, data)) return;
+
+//     const char* dev = doc["device"];
+//     const char* status = doc["status"];
+
+//     if (!dev || !status) return;
+
+//     // Update upstream status
+//     if (String(dev) == upstreamDevice) {
+
+//         if (upstreamDevice == "") {
+//             upstreamIdle = true;  // No upstream device = first device
+//         } else {
+//             upstreamIdle = (String(status) == "idle");
+//         }
+//     }
+
+//     // Also allow first device to proceed immediately (no upstream device)
+//     if (upstreamDevice == "") {
+//         upstreamIdle = true;
+//     }
+// }
+
+// void publishDeviceCommStatus(const char* status) {
+//     JsonDocument doc;
+//     doc["device"] = System.deviceID();
+//     doc["status"] = status;
+
+//     char payload[128];
+//     serializeJson(doc, payload);
+//     Particle.publish("deviceComm", payload, PRIVATE);
+// }
