@@ -11,7 +11,6 @@ extern unsigned long requiredPulses;
 extern unsigned long timeoutDuration;
 
 extern unsigned long startTime;
-//extern bool pulseStarted;
 
 extern IrrigationState irrigationState;
 extern IrrigationState fertilizerState;
@@ -99,7 +98,6 @@ void stopFertilizer() {
 void stopIrrigation(){
     digitalWrite(relayPins[currentRelay], LOW);     //relay drive off
     pulseCount = 0;
-    //pulseStarted = false;
     irrigationState = IDLE;
     printDebugMessage("✅ Stopping Water Dispense");
 }
@@ -134,6 +132,12 @@ void handleTempSensorRead(const char *event, const char *data) {
     snprintf(payload, sizeof(payload),
         "{\"device\":\"%s\",\"tempF\":\"%.2f\",\"hum\":\"%.2f\"}",
         System.deviceID().c_str(), tempF, humidity);
+
+    Serial.print("TemF = ");
+    Serial.println(tempF);
+
+    Serial.print("Hum = ");
+    Serial.println(humidity);
 
     Particle.publish("sensorData", payload, PRIVATE);
     printDebugMessagef("🌡 Temp Read: %.2f °F, Humidity: %.2f %%", tempF, humidity);
@@ -217,6 +221,23 @@ void handleIrrigationEvent(const char *event, const char *data) {
     jobsPending = true;
     jobDevice = target;
 
+    //Trigger a temperature read once per Job set
+    if (!bme280Error) {
+        tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
+        humidity = bme.readHumidity();
+    } else {
+        tempF = 999.0;
+        humidity = 999.0;
+    }
+
+    char payload[256];
+    snprintf(payload, sizeof(payload),
+    "{\"device\":\"%s\",\"tempF\":\"%.2f\",\"hum\":\"%.2f\"}",
+    System.deviceID().c_str(), tempF, humidity);
+
+    Particle.publish("sensorData", payload, PRIVATE);
+    //printDebugMessagef("🌡 Temp Read: %.2f °F, Humidity: %.2f %%", tempF, humidity);
+
     startNextJob();
 }
 
@@ -225,29 +246,22 @@ void publishIrrigationStatus(const char* status) {
     doc["device"] = System.deviceID();
     doc["relay"] = currentRelay + 1;
     doc["status"] = status;
-    doc["waterQty"] = jobWaterQty[currentJobIndex];
-    doc["fertQty"] = jobFertQty[currentJobIndex];
+    //if in progress, use the qty to dispense, if low_flow, no_flow etc use quantity actually dispensed
+    // if(String(status) == "in_progress"){
+    //     doc["waterQty"] = jobWaterQty[currentJobIndex];
+    //     doc["fertQty"] = jobFertQty[currentJobIndex];
+    // }
+    // else{
+    //Always show as dispensed
+    doc["waterQty"] = (round)((double)pulseCount / (660.0 * 3.78541));
+    doc["fertQty"] = (int)(stepsSent / (120 * 200));  // integer oz estimate
+    // }
 
     char payload[256];
     serializeJson(doc, payload);
     Particle.publish("irrigation_status", payload, PRIVATE);
-    printDebugMessage(String::format("✅ Published status: %s", payload));
+    printDebugMessage(String::format("✅ Irrigation status: %s", payload));
 }
-
-
-// void publishIrrigationStatus(const char* status) {
-//     JsonDocument doc;
-//     doc["device"] = System.deviceID();
-//     doc["relay"] = currentRelay + 1;
-//     doc["status"] = status;
-//     doc["waterQty"] = pulseCount / PULSES_PER_GALLON;
-//     doc["fertQty"] = stepsSent / (120 * 200);   //steps * 10z/120 rot * 1 rot/200 steps = oz
-
-//     char payload[256];
-//     serializeJson(doc, payload);
-//     Particle.publish("irrigation_status", payload, PRIVATE);
-//     printDebugMessage(String::format("✅ Published status: %s", payload));
-//   }
 
 void printDebugMessage(String msg) {
     const size_t maxLen = 256;
@@ -296,25 +310,26 @@ int splitString(const String& input, String output[], int maxParts) {
 
 void startNextJob() {
     lastStatusUpdate = millis();  // reset when new job starts
-
-    // // Only proceed if upstream is idle
-    // if (devicePosition != FIRST && !upstreamIdle) {
-    //     //printDebugMessage("⏳ Waiting for upstream device to become idle");
-    //     return;  // Will retry on next loop cycle
-    // }
-    
-    if (currentJobIndex >= totalJobs) {
-        jobsPending = false;
-        printDebugMessage("✅ All irrigation jobs complete");
-        //publishDeviceCommStatus("idle");    //Device to device for sequencing
-        return;
-    }
-
     int relay = jobRelay[currentJobIndex];
     int waterQty = jobWaterQty[currentJobIndex];
     int fertQty = jobFertQty[currentJobIndex];
 
-    printDebugMessage(String::format("🚿 Job #%d: Relay %d, %d gal, %d oz", currentJobIndex+1, relay, waterQty, fertQty));
+
+    //If mydeviceID is e00fce68db61e483e6b7a085, press on
+    //If mydeviceID is e00fce687edca63b21266dfc wait for e00fce68db61e483e6b7a085 to publish irrigation complete
+    //if mydeviceID is TBD wait for e00fce687edca63b21266dfc to publish irrigatino complete
+
+
+
+    if (currentJobIndex >= totalJobs)
+    {
+        //printDebugMessage(String::format("🚿 Job #%d: Relay %d, %d gal, %d oz", currentJobIndex+1, relay, waterQty, fertQty));
+        //printDebugMessage(String::format("🚿 Job #%d: Total Jobs %d", currentJobIndex, totalJobs));
+        jobsPending = false;
+        printDebugMessage("✅ All irrigation jobs complete");
+        //seems like this is the place to set the flags for each deviceId to check
+        return;
+    }
 
     currentRelay = relay - 1;
     requiredPulses = (unsigned long)(waterQty * PULSES_PER_GALLON);
@@ -335,55 +350,8 @@ void startNextJob() {
     jobJustStarted = true;
     startTime = millis();
     irrigationState = RUNNING;
-    //publishDeviceCommStatus("irrigating");  //device to device for sequencing
+    ////publishDeviceCommStatus("irrigating");  //device to device for sequencing
     publishIrrigationStatus("in_progress");
 }
 
-void publishIrrigationProgress() {
-    JsonDocument doc;
-    doc["device"] = System.deviceID();
-    doc["relay"] = currentRelay + 1;
-    doc["status"] = "in_progress";
-    doc["waterQty"] = (round)((double)pulseCount / (660.0 * 3.78541));
-    doc["fertQty"] = (int)(stepsSent / (120 * 200));  // integer oz estimate
-    //printDebugMessage(String::format("📶 pulseCount: %lu", pulseCount));
-    char payload[256];
-    serializeJson(doc, payload);
-    Particle.publish("irrigation_status", payload, PRIVATE);
-    printDebugMessage(String::format("📶 Progress update: %s", payload));
-}
 
-// void handleDeviceComm(const char *event, const char *data) {
-//     JsonDocument doc;
-//     if (deserializeJson(doc, data)) return;
-
-//     const char* dev = doc["device"];
-//     const char* status = doc["status"];
-
-//     if (!dev || !status) return;
-
-//     // Update upstream status
-//     if (String(dev) == upstreamDevice) {
-
-//         if (upstreamDevice == "") {
-//             upstreamIdle = true;  // No upstream device = first device
-//         } else {
-//             upstreamIdle = (String(status) == "idle");
-//         }
-//     }
-
-//     // Also allow first device to proceed immediately (no upstream device)
-//     if (upstreamDevice == "") {
-//         upstreamIdle = true;
-//     }
-// }
-
-// void publishDeviceCommStatus(const char* status) {
-//     JsonDocument doc;
-//     doc["device"] = System.deviceID();
-//     doc["status"] = status;
-
-//     char payload[128];
-//     serializeJson(doc, payload);
-//     Particle.publish("deviceComm", payload, PRIVATE);
-// }

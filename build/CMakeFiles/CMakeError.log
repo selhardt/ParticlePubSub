@@ -136,3 +136,26 @@ Run Build Command(s):/usr/bin/make -f Makefile cmTC_ea958/fast && You have not a
 
 
 
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-kZHv0s
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_029ad/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-dOQMkr
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_e51d0/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+

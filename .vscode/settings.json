@@ -6,7 +6,8 @@
         "array": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "__locale": "cpp"
     },
     "particle.firmwareVersion": "6.3.3",
     "particle.targetPlatform": "boron",

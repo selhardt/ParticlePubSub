@@ -8,9 +8,7 @@
 #include <Adafruit_BME280.h>
 // Expose the BME280 object and function
 extern Adafruit_BME280 bme;
-//void readBME(String command);
 
-//int handleIrrigationCommand(String command);
 void handleIrrigationEvent(const char *event, const char *data);
 void stopFertilizer();
 void stopIrrigation();
@@ -21,7 +19,6 @@ void printDebugMessage(String msg);
 void printDebugMessagef(const char *format, ...);
 int splitString(const String &input, String output[], int maxParts);
 void startNextJob();
-void publishIrrigationProgress();
 // void handleDeviceComm(const char *event, const char *data);
 // void publishDeviceCommStatus(const char *status);
 

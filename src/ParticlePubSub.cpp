@@ -24,21 +24,41 @@
 //              24          Bugs in First Device Start
 //  8/6/25      25          Fixing First Device Start
 //  8/6/25      26          Commented out all Sequencing code - Think about publishing and listening on same node?
-//  8/6/25      27          FIx conversino to gallons in status update - seems to work
+//  8/6/25      27          Fix conversino to gallons in status update - seems to work
+//  8/7/25      28          Irrigation event now triggers 1 temperature read - it is no longer sequenced by NodeRed
+//                          Changed the status report to be actual dispensed for low_flow or no_flow
+//  8/7/25                  Un commented sequencing code - both online devices are starting
+//                          Revised device Comm Function
+//                          Job >= changed to ==
+//  8/7/25      29          Backed out all sequencing code as it does not work
 //  *******************************************************************************************************************************************
 //  Names for Devices at bottom of screen for direct flash
 //  Name in VS Code             deviceID                        Relay Number            Relay Name
 //  Pool_Fruit_Trees            e00fce68db61e483e6b7a085        1,2,3,4,5,6,7           Fig,Orange,LizLemon,MeyerLemon,3Bells,2Bells,Vitex
-//  Pool_Palms_and_Flowers      e00fce68e12921ec4e2ff144        1,2,3,4,5,6,7           Palm1,Palm2,BirdParadise,3Lantana,SmallPalm,BigPalmSteps,RosataPalm
-//  Garage_Flowers_and_Trees    e00fce687edca63b21266dfc        1,2,3,4,5,6,7           Tangelo,4Lantana,GarageMesquite,Ironwood,WestMesquite,MiddleMesquite,EastMesquite
-//  softener_vavles             e00fce68f20c968df59370c6        
+//  Pool_Palms_and_Flowers      e00fce687edca63b21266dfc        1,2,3,4,5,6,7           Palm1,Palm2,BirdParadise,3Lantana,SmallPalm,BigPalmSteps,RosataPalm
+//  Garage_Flowers_and_Trees    TBD        1,2,3,4,5,6,7           Tangelo,4Lantana,GarageMesquite,Ironwood,WestMesquite,MiddleMesquite,EastMesquite
+//                      
 //  *******************************************************************************************************************************************
 // Strikeout CmdK - release, then press delete
 //  *******************************************************************************************************************************************
+//  BORON RESTORE:
+//  https://docs.particle.io/tools/device-restore/device-restore-usb/
+//  in terminal window: particle flash --usb tinker
+//
+//  *******************************************************************************************************************************************
+//  WARNING!!!!
+//  If Firmware rev is locked in Particle Dashboard - physical flash changes will revert to locked version creating havoc
+//
+//
+
 //TODO
 //At the end of a dispense - return the Water quantity, pulses, MoonJoice Qty, rotations, water flow rate, moonjuice flow rate and elapsed time to dispense
 //Check that the final status update is done prior to ending moving on to next job
 //  *******************************************************************************************************************************************
+//
+//B̶U̶G̶S̶ -̶ A̶L̶L̶ w̶a̶t̶e̶r̶Q̶t̶y̶ i̶n̶ s̶t̶a̶t̶u̶s̶ p̶u̶b̶l̶i̶s̶h̶e̶s̶ s̶h̶o̶w̶ 3̶0̶ g̶a̶l̶ - FIXED rev 30
+// 
+
 
 #include "Particle.h"
 #include "ArduinoJson.h"
@@ -50,8 +70,8 @@
 void pulseISR();
 void setup();
 void loop();
-#line 45 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
-PRODUCT_VERSION(27); // Increment this with each new upload
+#line 65 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
+PRODUCT_VERSION(30); // Increment this with each new upload
 
 // Designate GPIO pins
 // GPIO pin for flow sensor
@@ -69,7 +89,6 @@ unsigned long pulseCount = 0;
 unsigned long startTime = 0;
 unsigned long timeoutDuration = 0;
 unsigned long lastPulseTime = 0;
-//bool pulseStarted = false;
 bool fertEnabled = false;
 
 IrrigationState irrigationState = IDLE;         //Goes to Running when dispensing Water
@@ -84,11 +103,6 @@ int totalJobs = 0;
 int currentJobIndex = 0;
 bool jobsPending = false;
 bool jobJustStarted = false;
-
-//Job Sequencing
-// DevicePosition devicePosition;
-// bool upstreamIdle;
-// String upstreamDevice;
 
 //Moon Juice state and tracking
 int requiredSteps = 0;
@@ -140,21 +154,6 @@ void setup() {
     waitUntil(Particle.connected);
     //printDebugMessage("✅ Particle cloud connected");
 
-//     //Job Sequencing Setup
-//     String thisDevice = System.deviceID();
-//     if (thisDevice == "e00fce68db61e483e6b7a085") {
-//         devicePosition = FIRST;
-//         upstreamDevice = "";  // None
-//     } else if (thisDevice == "e00fce68e12921ec4e2ff144") {
-//         devicePosition = SECOND;
-//         upstreamDevice = "e00fce68db61e483e6b7a085";
-//     } else if (thisDevice == "e00fce687edca63b21266dfc") {
-//         devicePosition = THIRD;
-//         upstreamDevice = "e00fce68e12921ec4e2ff144";
-//     } else {
-//     printDebugMessage("❌ Unknown device ID");
-// }
-
     // Set relay pins as outputs and turn off initially
     for (int i = 0; i < 7; i++) {
         pinMode(relayPins[i], OUTPUT);
@@ -174,27 +173,30 @@ void setup() {
       // Initialize BME280 sensor
 
     if (bme.begin(0x76)) {
-        Serial.println("✅ BME280 found at 0x76");
+        Serial.println("✅ BME280 found at 0x76 yay");
         bme280Error = false;
-        tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
-        humidity = bme.readHumidity();
-        Serial.print("Temp = ");
-        Serial.println(tempF);
     }
     else if (bme.begin(0x77))
     {
         Serial.println("✅ BME280 found at 0x77");
         bme280Error = false;
-        tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
-        humidity = bme.readHumidity();
-        Serial.print("Temp = ");
-        Serial.println(tempF);
     }
     else
     {
         Serial.println("❌ Could not find BME280 sensor at 0x76 or 0x77");
         bme280Error = true;
     }
+
+    if (!bme280Error) {
+        tempF = bme.readTemperature() * 9.0 / 5.0 + 32.0;
+        humidity = bme.readHumidity();
+    } else {
+        tempF = 999.0;
+        humidity = 999.0;
+    }
+
+    Serial.print("TemF = ");
+    Serial.println(tempF);
 
     //Particle Functions
     Particle.function("reboot", resetBoron);
@@ -213,9 +215,6 @@ void setup() {
     Serial.print("firmware_version");
     Serial.println(String::format("version: %d", __system_product_version));
  
-    // // Job Sequencin
-    // Particle.subscribe("deviceComm", handleDeviceComm);
-
 }
 
 void loop() {
@@ -223,51 +222,55 @@ void loop() {
     unsigned long now = millis();
     Particle.process();
 
-    // if (irrigationState != RUNNING && jobsPending) {
-    //     startNextJob();     // Retry in case upstream just became idle
-    // }
-
     if (irrigationState == RUNNING)
     {
-        //fertilizer stepper logic
-        //This needs to be here as can't inject moonjuice into high pressure lines
-        //Needs irrigation water flowing to dispense
-        if (fertilizerState == RUNNING) {
-          unsigned long nowMicros = micros();
-          if ((nowMicros - lastPulseTimeStepper) >= intervalMicros) {
-            lastPulseTimeStepper = nowMicros;
+        // fertilizer stepper logic
+        // This needs to be here as can't inject moonjuice into high pressure lines
+        // Needs irrigation water flowing to dispense
+        if (fertilizerState == RUNNING)
+        {
+            unsigned long nowMicros = micros();
+            if ((nowMicros - lastPulseTimeStepper) >= intervalMicros)
+            {
+                lastPulseTimeStepper = nowMicros;
 
-            digitalWrite(stepperPin, HIGH);
-            delayMicroseconds(STEPPER_DELAY_US);
-            digitalWrite(stepperPin, LOW);
-            delayMicroseconds(STEPPER_DELAY_US);
+                digitalWrite(stepperPin, HIGH);
+                delayMicroseconds(STEPPER_DELAY_US);
+                digitalWrite(stepperPin, LOW);
+                delayMicroseconds(STEPPER_DELAY_US);
 
-            stepsSent++;
-            if (stepsSent >= requiredSteps) {
+                stepsSent++;
+                if (stepsSent >= requiredSteps)
+                {
 
-                if(debugPrint) Serial.print("Fertilizer Steps Sent");
-                if(debugPrint) Serial.println(stepsSent);
+                    if (debugPrint)
+                        Serial.print("Fertilizer Steps Sent");
+                    if (debugPrint)
+                        Serial.println(stepsSent);
 
-                publishIrrigationStatus("fertilize_complete");
-                stopFertilizer();
+                    publishIrrigationStatus("fertilize_complete");
+                    stopFertilizer();
+                }
             }
-
-          }
         }
-        //Publish updates
-        if (millis() - lastStatusUpdate >= statusInterval) {
-        lastStatusUpdate = millis();
-        publishIrrigationProgress();
+        
+        // Publish updates every statusInterval
+        if (millis() - lastStatusUpdate >= statusInterval)
+        {
+            lastStatusUpdate = millis();
+            publishIrrigationStatus("in_progress");
         }
         // Handles no_flow on first relay - unshure why it trips as the math seems to be OK
-        if (jobJustStarted) {
+        if (jobJustStarted)
+        {
             jobJustStarted = false;
-            return;  // skip this loop to allow startTime to settle
+            return; // skip this loop to allow startTime to settle
         }
+
         // timeout if < 1 liter flows during noFlowThreshold (currently 30sec)
-        if ((pulseCount < PULSES_PER_LITER) && ((now - startTime) > noFlowThreshold)) {
+        if ((pulseCount < PULSES_PER_LITER) && ((now - startTime) > noFlowThreshold))
+        {
             publishIrrigationStatus("no_flow");
-            //Serial.println("no_flow");
             stopIrrigation();
             stopFertilizer();
 
@@ -275,11 +278,11 @@ void loop() {
             startNextJob(); // ⬅️ continue despite no flow
             return;
         }
-        // Completed irrigation water delivery
-        if (pulseCount >= requiredPulses) {
-            publishIrrigationProgress();                        //Final update prior to completion 
-            publishIrrigationStatus("irrigation_complete");     //Complete
-            Serial.println("irrigation_complete");
+        // Completed irrigation water delivery for each job
+        if (pulseCount >= requiredPulses)
+        {
+            publishIrrigationStatus("irrigation_complete"); // Complete
+
             stopIrrigation();
             stopFertilizer();
 
@@ -288,7 +291,8 @@ void loop() {
             return;
         }
         // resets if irrigation never exceeds requiredPulses
-        if (now - startTime > timeoutDuration) {
+        if (now - startTime > timeoutDuration)
+        {
             publishIrrigationStatus("timeout");
             Serial.println("irrigation_timeout");
             stopIrrigation();

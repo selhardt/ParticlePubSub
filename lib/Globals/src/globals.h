@@ -18,5 +18,3 @@ enum IrrigationState
 //Job Handling
 #define MAX_JOBS 8
 
-//Job Sequencing
-enum DevicePosition { FIRST, SECOND, THIRD };
