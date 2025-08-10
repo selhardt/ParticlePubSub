@@ -28,6 +28,7 @@
 //  8/7/25      29          Backed out all sequencing code as it does not work
 //  8/9/25      31          8/9/25 - Successful 1 to 2 sequence, configuring 3rd device for full test
 //  8/10/25                 Provisioning 3rd Device
+//  8/10/25     32          Changes for IrrigationState on SECOND and THIRD to be WAITING for next calendar event
 //  *******************************************************************************************************************************************
 //  Names for Devices at bottom of screen for direct flash
 //  Name in VS Code             deviceID                        Relay Number            Relay Name
@@ -58,7 +59,7 @@
 //  *******************************************************************************************************************************************
 //
 //B̶U̶G̶S̶ -̶ A̶L̶L̶ w̶a̶t̶e̶r̶Q̶t̶y̶ i̶n̶ s̶t̶a̶t̶u̶s̶ p̶u̶b̶l̶i̶s̶h̶e̶s̶ s̶h̶o̶w̶ 3̶0̶ g̶a̶l̶ - FIXED rev 30
-// 
+//Failed Run had to reboot all devices and then it sequenced properly - FIXED rev 31
 
 
 #include "Particle.h"
@@ -68,7 +69,7 @@
 #include <Wire.h>
 
 //This must be directly programmed once prior to OTA updates
-PRODUCT_VERSION(30); // Increment this with each new upload
+PRODUCT_VERSION(32); // Increment this with each new upload
 
 // Designate GPIO pins
 // GPIO pin for flow sensor

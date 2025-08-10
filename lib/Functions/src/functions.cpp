@@ -198,12 +198,8 @@ void handleIrrigationEvent(const char *event, const char *data) {
     String fertParts[MAX_JOBS];
 
     totalJobs = splitString(relayStr, relayParts, MAX_JOBS);
-    //Serial.print("totalJobs ");
-    //Serial.println(totalJobs);
     int waterCount = splitString(waterStr, waterParts, MAX_JOBS);
     int fertCount = splitString(fertStr, fertParts, MAX_JOBS);
-    //Serial.print("waterCount ");
-    //Serial.println(waterCount);
 
     if (waterCount != totalJobs || fertCount != totalJobs) {
         printDebugMessage("❌ Mismatched job field lengths");
@@ -246,32 +242,14 @@ void publishIrrigationStatus(const char* status) {
     doc["device"] = System.deviceID();
     doc["relay"] = currentRelay + 1;
     doc["status"] = status;
-    //if in progress, use the qty to dispense, if low_flow, no_flow etc use quantity actually dispensed
-    // if(String(status) == "in_progress"){
-    //     doc["waterQty"] = jobWaterQty[currentJobIndex];
-    //     doc["fertQty"] = jobFertQty[currentJobIndex];
-    // }
-    // else{
-    //Always show as dispensed
     doc["waterQty"] = (round)((double)pulseCount / (660.0 * 3.78541));
     doc["fertQty"] = (int)(stepsSent / (120 * 200));  // integer oz estimate
-    // }
 
     char payload[256];
     serializeJson(doc, payload);
     Particle.publish("irrigation_status", payload, PRIVATE);
     //printDebugMessage(String::format("✅ Irrigation status: %s", payload));
 }
-
-// void publishJobStatus(const char* status) {
-//     JsonDocument doc;
-//     doc["device"] = System.deviceID();
-//     doc["status"] = status;
-//     char payload[256];
-//     serializeJson(doc, payload);
-//     printDebugMessage(String::format("✅✅✅✅ Job status: %s", payload));
-//     Particle.publish("jobStatus", payload, PRIVATE);
-// }
 
 void printDebugMessage(String msg) {
     const size_t maxLen = 256;
@@ -354,9 +332,21 @@ void startNextJob() {
 
         char payload[256];
         snprintf(payload, sizeof(payload),
-                 "{\"device\":\"%s\",\"status\":\"%s\"}",
-                 System.deviceID().c_str(), "jobs_complete");
-        //TODO something better to make sure that the publish happens
+            "{\"device\":\"%s\",\"status\":\"%s\"}",
+            System.deviceID().c_str(), "jobs_complete");
+
+        //Need to set irrigation state to waiting if SECOND or THIRD are done
+
+        if(System.deviceID() == FIRST){
+            //irrigationState is set to IDLE by stopIrrigation()
+        }
+        else if(System.deviceID() == SECOND){       //Put state back to WAITING for next calendar event
+            irrigationState = WAITING;
+        }
+        else if(System.deviceID() == THIRD){        //Put state back to WAITING for next calendar event
+            irrigationState = WAITING;
+        }
+
         Particle.publish("jobStatus", payload, PRIVATE); // signals SECOND and THIRD devices to progress
         return;
     }
@@ -396,13 +386,6 @@ void handleIrrigationJobs(const char *event, const char *data){
     const char* dev = doc["device"];
     const char* status = doc["status"];
 
-    //This happens
-    // Serial.println(SECOND);
-    if(System.deviceID() == SECOND){
-        Serial.println(dev);
-        Serial.println(status);
-    }
-
     char payload[256];
     serializeJson(doc, payload);
     printDebugMessage(String::format("✅ handleIrrigationJobs Job status: %s", payload));
@@ -411,7 +394,6 @@ void handleIrrigationJobs(const char *event, const char *data){
         if(System.deviceID() == SECOND) Serial.println("FIRST is jobs_complete");
         if (System.deviceID() == SECOND)
         {
-            Serial.println("✅✅✅ Set 2nd Device to IDLE - should now start");
             printDebugMessage("✅✅✅ Set 2nd Device to IDLE - should now start");
             irrigationState = IDLE;             //Move SECOND to IDLE so that start next job runs and sets RUNNING
             startNextJob();
@@ -421,7 +403,7 @@ void handleIrrigationJobs(const char *event, const char *data){
     if(String(dev) == SECOND && String(status) == "jobs_complete"){
         if(System.deviceID() == THIRD){
             printDebugMessage("✅✅✅ Set 3rd Device to IDLE - should now start");
-            irrigationState = IDLE;             //Move SECOND to IDLE so that start next job runs and sets RUNNING
+            irrigationState = IDLE;             //Move THIRD to IDLE so that start next job runs and sets RUNNING
             startNextJob();
             return;
         }

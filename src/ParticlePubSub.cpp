@@ -31,7 +31,8 @@
 //                          Revised device Comm Function
 //                          Job >= changed to ==
 //  8/7/25      29          Backed out all sequencing code as it does not work
-//  8/9/25      30          
+//  8/9/25      31          8/9/25 - Successful 1 to 2 sequence, configuring 3rd device for full test
+//  8/10/25                 Provisioning 3rd Device
 //  *******************************************************************************************************************************************
 //  Names for Devices at bottom of screen for direct flash
 //  Name in VS Code             deviceID                        Relay Number            Relay Name
@@ -62,7 +63,8 @@
 //  *******************************************************************************************************************************************
 //
 //B̶U̶G̶S̶ -̶ A̶L̶L̶ w̶a̶t̶e̶r̶Q̶t̶y̶ i̶n̶ s̶t̶a̶t̶u̶s̶ p̶u̶b̶l̶i̶s̶h̶e̶s̶ s̶h̶o̶w̶ 3̶0̶ g̶a̶l̶ - FIXED rev 30
-// 
+//Failed Run had to reboot all devices and then it sequenced properly
+//Tried again - first run goes as expected - a second calendar event triggers all 3 devices to start irrigating.
 
 
 #include "Particle.h"
@@ -75,8 +77,8 @@
 void pulseISR();
 void setup();
 void loop();
-#line 70 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
-PRODUCT_VERSION(30); // Increment this with each new upload
+#line 72 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
+PRODUCT_VERSION(31); // Increment this with each new upload
 
 // Designate GPIO pins
 // GPIO pin for flow sensor
