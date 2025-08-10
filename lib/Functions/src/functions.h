@@ -19,6 +19,9 @@ void printDebugMessage(String msg);
 void printDebugMessagef(const char *format, ...);
 int splitString(const String &input, String output[], int maxParts);
 void startNextJob();
+void handleIrrigationJobs(const char *event, const char *data);
+//void publishJobStatus(const char *status);
+
 // void handleDeviceComm(const char *event, const char *data);
 // void publishDeviceCommStatus(const char *status);
 

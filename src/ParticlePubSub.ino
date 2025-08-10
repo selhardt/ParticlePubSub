@@ -26,19 +26,26 @@
 //                          Revised device Comm Function
 //                          Job >= changed to ==
 //  8/7/25      29          Backed out all sequencing code as it does not work
+//  8/9/25      31          8/9/25 - Successful 1 to 2 sequence, configuring 3rd device for full test
+//  8/10/25                 Provisioning 3rd Device
 //  *******************************************************************************************************************************************
 //  Names for Devices at bottom of screen for direct flash
 //  Name in VS Code             deviceID                        Relay Number            Relay Name
 //  Pool_Fruit_Trees            e00fce68db61e483e6b7a085        1,2,3,4,5,6,7           Fig,Orange,LizLemon,MeyerLemon,3Bells,2Bells,Vitex
 //  Pool_Palms_and_Flowers      e00fce687edca63b21266dfc        1,2,3,4,5,6,7           Palm1,Palm2,BirdParadise,3Lantana,SmallPalm,BigPalmSteps,RosataPalm
-//  Garage_Flowers_and_Trees    TBD        1,2,3,4,5,6,7           Tangelo,4Lantana,GarageMesquite,Ironwood,WestMesquite,MiddleMesquite,EastMesquite
+//  Garage_Flowers_and_Trees    e00fce68195036200d338fb6        1,2,3,4,5,6,7           Tangelo,4Lantana,GarageMesquite,Ironwood,WestMesquite,MiddleMesquite,EastMesquite
 //                      
 //  *******************************************************************************************************************************************
 // Strikeout CmdK - release, then press delete
 //  *******************************************************************************************************************************************
 //  BORON RESTORE:
-//  https://docs.particle.io/tools/device-restore/device-restore-usb/
-//  in terminal window: particle flash --usb tinker
+// Use Particle CLI to flash recovery firmware manually:
+// Open terminal - cd downloads
+// 1. particle flash --usb tinker-serial1-debugging-0.8.0-rc.27-boron-mono.bin
+// 2. particle flash --usb boron-system-part1@1.1.0.bin
+// Then perform the factory reset (MODE + RESET until white blink). - didn't have to do this
+// 3. reset button then has it blinking blue
+// 4. Finally, re-add the device via the mobile app.
 //
 //  *******************************************************************************************************************************************
 //  WARNING!!!!
@@ -47,8 +54,7 @@
 //
 
 //TODO
-//At the end of a dispense - return the Water quantity, pulses, MoonJoice Qty, rotations, water flow rate, moonjuice flow rate and elapsed time to dispense
-//Check that the final status update is done prior to ending moving on to next job
+//Device Sequencing
 //  *******************************************************************************************************************************************
 //
 //B̶U̶G̶S̶ -̶ A̶L̶L̶ w̶a̶t̶e̶r̶Q̶t̶y̶ i̶n̶ s̶t̶a̶t̶u̶s̶ p̶u̶b̶l̶i̶s̶h̶e̶s̶ s̶h̶o̶w̶ 3̶0̶ g̶a̶l̶ - FIXED rev 30
@@ -128,9 +134,9 @@ char debugText[256];
 
 void pulseISR() {
     //Only count pulses if the state is RUNNING
-    //This flow sensor will run on 2nd system in series so don't count those
-    //If it is counting and no other systems are irrigating - could be a leak
-    if(irrigationState==RUNNING){
+    //This flow sensor will run on 2nd and 3rd system in series so don't count those
+    //If it is counting and no other systems are irrigating - could be a leak?
+    if(irrigationState==RUNNING){   //Count Flow only if RUNNING
         pulseCount++;
         lastPulseTime = millis();
     }
@@ -153,6 +159,19 @@ void setup() {
     // Set up pulse input
     pinMode(pulsePin, INPUT_PULLUP);
     attachInterrupt(pulsePin, pulseISR, FALLING);
+
+    //Set states for sequencing
+    if(System.deviceID() == FIRST){
+        //nothing required
+    }
+    else if(System.deviceID() == SECOND){
+        irrigationState = WAITING;
+    }
+    else if(System.deviceID() == THIRD){
+        irrigationState = WAITING;
+    }
+
+
 
     // Set up stepper motor output
     pinMode(stepperPin, OUTPUT);
@@ -200,12 +219,17 @@ void setup() {
     Particle.subscribe("read_sensors", handleTempSensorRead);
     // Abort Irrigation
     Particle.subscribe("abortIrrigate", handleAbortEvent);
-    //Announce being up
+    // Device status
+    Particle.subscribe("jobStatus", handleIrrigationJobs);
+    // Announce being up
     printDebugMessage("✅ Ready for irrigation events :-)");
 
-    Serial.print("firmware_version");
-    Serial.println(String::format("version: %d", __system_product_version));
- 
+
+    //Print firmware rev at start
+    Serial.print("firmware_version"); Serial.println(String::format(": %d", __system_product_version));
+    //This publish is successful
+    //Particle.publish("jobStatus", "jobStatus Tester", PRIVATE);
+    //publishJobStatus("jobs_tester");
 }
 
 void loop() {
@@ -213,7 +237,7 @@ void loop() {
     unsigned long now = millis();
     Particle.process();
 
-    if (irrigationState == RUNNING)
+    if (irrigationState == RUNNING) //main loop
     {
         // fertilizer stepper logic
         // This needs to be here as can't inject moonjuice into high pressure lines

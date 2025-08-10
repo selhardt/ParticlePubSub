@@ -184,7 +184,7 @@ void handleIrrigationEvent(const char *event, const char *data) {
     //If irrigation already in progress, ignore new irrigation jobs
     //Happens if manually triggered on NR AND then the 30 minute check sees the calendar event
     //Could also happen if the calendar event is longer than 30 minutes 
-    if(irrigationState == RUNNING){
+    if(irrigationState == RUNNING){ //Handles re-activated job
         printDebugMessage("❌ Already irrigating - Ignoring Irrigation Event");
         return;
     }
@@ -198,12 +198,12 @@ void handleIrrigationEvent(const char *event, const char *data) {
     String fertParts[MAX_JOBS];
 
     totalJobs = splitString(relayStr, relayParts, MAX_JOBS);
-    Serial.print("totalJobs ");
-    Serial.println(totalJobs);
+    //Serial.print("totalJobs ");
+    //Serial.println(totalJobs);
     int waterCount = splitString(waterStr, waterParts, MAX_JOBS);
     int fertCount = splitString(fertStr, fertParts, MAX_JOBS);
-    Serial.print("waterCount ");
-    Serial.println(waterCount);
+    //Serial.print("waterCount ");
+    //Serial.println(waterCount);
 
     if (waterCount != totalJobs || fertCount != totalJobs) {
         printDebugMessage("❌ Mismatched job field lengths");
@@ -260,8 +260,18 @@ void publishIrrigationStatus(const char* status) {
     char payload[256];
     serializeJson(doc, payload);
     Particle.publish("irrigation_status", payload, PRIVATE);
-    printDebugMessage(String::format("✅ Irrigation status: %s", payload));
+    //printDebugMessage(String::format("✅ Irrigation status: %s", payload));
 }
+
+// void publishJobStatus(const char* status) {
+//     JsonDocument doc;
+//     doc["device"] = System.deviceID();
+//     doc["status"] = status;
+//     char payload[256];
+//     serializeJson(doc, payload);
+//     printDebugMessage(String::format("✅✅✅✅ Job status: %s", payload));
+//     Particle.publish("jobStatus", payload, PRIVATE);
+// }
 
 void printDebugMessage(String msg) {
     const size_t maxLen = 256;
@@ -314,12 +324,26 @@ void startNextJob() {
     int waterQty = jobWaterQty[currentJobIndex];
     int fertQty = jobFertQty[currentJobIndex];
 
-
-    //If mydeviceID is e00fce68db61e483e6b7a085, press on
+    //System.deviceID()
+    //If mydeviceID is e00fce68db61e483e6b7a085, press on and start
     //If mydeviceID is e00fce687edca63b21266dfc wait for e00fce68db61e483e6b7a085 to publish irrigation complete
-    //if mydeviceID is TBD wait for e00fce687edca63b21266dfc to publish irrigatino complete
+    //if mydeviceID is e00fce68195036200d338fb6 wait for e00fce687edca63b21266dfc to publish irrigatino complete
 
-
+    if(System.deviceID() == FIRST){             //First Job in queue - of to start
+        //nothing required
+    }
+    else if(System.deviceID() == SECOND){       //2nd Job in queue - wait for first to finish
+        if(irrigationState == WAITING){
+            printDebugMessage("❌ SECOND is WAITING");
+            return;
+        }
+    }
+    else if(System.deviceID() == THIRD){        //3rd Job in queue - wait for second to finish
+        if(irrigationState == WAITING){
+            printDebugMessage("❌ THIRD is WAITING");
+            return;
+        }
+    }
 
     if (currentJobIndex >= totalJobs)
     {
@@ -327,12 +351,19 @@ void startNextJob() {
         //printDebugMessage(String::format("🚿 Job #%d: Total Jobs %d", currentJobIndex, totalJobs));
         jobsPending = false;
         printDebugMessage("✅ All irrigation jobs complete");
-        //seems like this is the place to set the flags for each deviceId to check
+
+        char payload[256];
+        snprintf(payload, sizeof(payload),
+                 "{\"device\":\"%s\",\"status\":\"%s\"}",
+                 System.deviceID().c_str(), "jobs_complete");
+        //TODO something better to make sure that the publish happens
+        Particle.publish("jobStatus", payload, PRIVATE); // signals SECOND and THIRD devices to progress
         return;
     }
 
     currentRelay = relay - 1;
-    requiredPulses = (unsigned long)(waterQty * PULSES_PER_GALLON);
+    //requiredPulses = (unsigned long)(waterQty * PULSES_PER_GALLON);
+    requiredPulses = (unsigned long)((double)waterQty * 660.0 * 3.78541);
     timeoutDuration = waterQty * 90000UL;
     pulseCount = 0;
 
@@ -352,6 +383,51 @@ void startNextJob() {
     irrigationState = RUNNING;
     ////publishDeviceCommStatus("irrigating");  //device to device for sequencing
     publishIrrigationStatus("in_progress");
+}
+
+void handleIrrigationJobs(const char *event, const char *data){
+    //Each Device only publishes one "jobs_complete"
+    JsonDocument doc;
+    if (deserializeJson(doc, data)) {
+        printDebugMessage("❌ JSON parse error in irrigation jobs");
+        return;
+    }
+
+    const char* dev = doc["device"];
+    const char* status = doc["status"];
+
+    //This happens
+    // Serial.println(SECOND);
+    if(System.deviceID() == SECOND){
+        Serial.println(dev);
+        Serial.println(status);
+    }
+
+    char payload[256];
+    serializeJson(doc, payload);
+    printDebugMessage(String::format("✅ handleIrrigationJobs Job status: %s", payload));
+
+    if(String(dev) == FIRST && String(status) == "jobs_complete"){
+        if(System.deviceID() == SECOND) Serial.println("FIRST is jobs_complete");
+        if (System.deviceID() == SECOND)
+        {
+            Serial.println("✅✅✅ Set 2nd Device to IDLE - should now start");
+            printDebugMessage("✅✅✅ Set 2nd Device to IDLE - should now start");
+            irrigationState = IDLE;             //Move SECOND to IDLE so that start next job runs and sets RUNNING
+            startNextJob();
+            return;
+        }
+    }
+    if(String(dev) == SECOND && String(status) == "jobs_complete"){
+        if(System.deviceID() == THIRD){
+            printDebugMessage("✅✅✅ Set 3rd Device to IDLE - should now start");
+            irrigationState = IDLE;             //Move SECOND to IDLE so that start next job runs and sets RUNNING
+            startNextJob();
+            return;
+        }
+    }
+
+
 }
 
 
