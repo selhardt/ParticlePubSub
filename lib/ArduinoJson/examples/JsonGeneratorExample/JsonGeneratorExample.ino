@@ -10,8 +10,8 @@
 
 void setup() {
   // Initialize Serial port
-  Serial.begin(9600);
-  while (!Serial)
+  USBSerial.begin(9600);
+  while (!USBSerial)
     continue;
 
   // Allocate the JSON document
@@ -27,15 +27,15 @@ void setup() {
   data.add(2.302038);
 
   // Generate the minified JSON and send it to the Serial port
-  serializeJson(doc, Serial);
+  serializeJson(doc, USBSerial);
   // The above line prints:
   // {"sensor":"gps","time":1351824120,"data":[48.756080,2.302038]}
 
   // Start a new line
-  Serial.println();
+  USBSerial.println();
 
   // Generate the prettified JSON and send it to the Serial port
-  serializeJsonPretty(doc, Serial);
+  serializeJsonPretty(doc, USBSerial);
   // The above line prints:
   // {
   //   "sensor": "gps",

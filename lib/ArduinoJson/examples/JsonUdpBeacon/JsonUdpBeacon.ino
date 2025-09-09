@@ -31,13 +31,13 @@ EthernetUDP udp;
 
 void setup() {
   // Initialize serial port
-  Serial.begin(9600);
-  while (!Serial)
+  USBSerial.begin(9600);
+  while (!USBSerial)
     continue;
 
   // Initialize Ethernet libary
   if (!Ethernet.begin(mac)) {
-    Serial.println(F("Failed to initialize Ethernet library"));
+    USBSerial.println(F("Failed to initialize Ethernet library"));
     return;
   }
 
@@ -70,11 +70,11 @@ void loop() {
   }
 
   // Log
-  Serial.print(F("Sending to "));
-  Serial.print(remoteIp);
-  Serial.print(F(" on port "));
-  Serial.println(remotePort);
-  serializeJson(doc, Serial);
+  USBSerial.print(F("Sending to "));
+  USBSerial.print(remoteIp);
+  USBSerial.print(F(" on port "));
+  USBSerial.println(remotePort);
+  serializeJson(doc, USBSerial);
 
   // Send UDP packet
   udp.beginPacket(remoteIp, remotePort);

@@ -24,22 +24,22 @@ EthernetServer server(80);
 
 void setup() {
   // Initialize serial port
-  Serial.begin(9600);
-  while (!Serial)
+  USBSerial.begin(9600);
+  while (!USBSerial)
     continue;
 
   // Initialize Ethernet libary
   if (!Ethernet.begin(mac)) {
-    Serial.println(F("Failed to initialize Ethernet library"));
+    USBSerial.println(F("Failed to initialize Ethernet library"));
     return;
   }
 
   // Start to listen
   server.begin();
 
-  Serial.println(F("Server is ready."));
-  Serial.print(F("Please connect to http://"));
-  Serial.println(Ethernet.localIP());
+  USBSerial.println(F("Server is ready."));
+  USBSerial.print(F("Please connect to http://"));
+  USBSerial.println(Ethernet.localIP());
 }
 
 void loop() {
@@ -50,7 +50,7 @@ void loop() {
   if (!client)
     return;
 
-  Serial.println(F("New client"));
+  USBSerial.println(F("New client"));
 
   // Read the request (we ignore the content in this example)
   while (client.available())
@@ -79,9 +79,9 @@ void loop() {
     digitalValues.add(value);
   }
 
-  Serial.print(F("Sending: "));
-  serializeJson(doc, Serial);
-  Serial.println();
+  USBSerial.print(F("Sending: "));
+  serializeJson(doc, USBSerial);
+  USBSerial.println();
 
   // Write response headers
   client.println(F("HTTP/1.0 200 OK"));

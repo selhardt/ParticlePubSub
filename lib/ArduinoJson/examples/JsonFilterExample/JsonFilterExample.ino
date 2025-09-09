@@ -10,8 +10,8 @@
 
 void setup() {
   // Initialize serial port
-  Serial.begin(9600);
-  while (!Serial)
+  USBSerial.begin(9600);
+  while (!USBSerial)
     continue;
 
   // The huge input: an extract from OpenWeatherMap response
@@ -43,7 +43,7 @@ void setup() {
   deserializeJson(doc, input_json, DeserializationOption::Filter(filter));
 
   // Print the result
-  serializeJsonPretty(doc, Serial);
+  serializeJsonPretty(doc, USBSerial);
 }
 
 void loop() {

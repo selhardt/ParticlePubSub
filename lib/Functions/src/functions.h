@@ -1,16 +1,11 @@
 #pragma once
 #include "Particle.h"
 #include "ArduinoJson.h"    
-// Add this library via Particle Workbench
+#include "DHT20.h"
 
-#include <Adafruit_Sensor.h>
-#define ARDUINO 100         // Prevent warning from Adafruit_BME280.h
-#include <Adafruit_BME280.h>
-// Expose the BME280 object and function
-extern Adafruit_BME280 bme;
+extern DHT20 dht;
 
 void handleIrrigationEvent(const char *event, const char *data);
-void stopFertilizer();
 void stopIrrigation();
 void publishIrrigationStatus(const char *status);
 void handleTempSensorRead(const char *event, const char *data);
@@ -20,11 +15,11 @@ void printDebugMessagef(const char *format, ...);
 int splitString(const String &input, String output[], int maxParts);
 void startNextJob();
 void handleIrrigationJobs(const char *event, const char *data);
-//void publishJobStatus(const char *status);
+//void handleForceIrrigationEvent(const char *event, const char *data);
 
-// void handleDeviceComm(const char *event, const char *data);
-// void publishDeviceCommStatus(const char *status);
+void checkUSBSerial();
+void processCommand(char inBuf[]);
 
 // Particle Functions
 int resetBoron(String cmd);
-int stepperRotations(String cmd);
+int consoleCmd(String);

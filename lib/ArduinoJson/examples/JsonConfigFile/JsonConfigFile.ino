@@ -43,7 +43,7 @@ void loadConfiguration(const char* filename, Config& config) {
   // Deserialize the JSON document
   DeserializationError error = deserializeJson(doc, file);
   if (error)
-    Serial.println(F("Failed to read file, using default configuration"));
+    USBSerial.println(F("Failed to read file, using default configuration"));
 
   // Copy values from the JsonDocument to the Config
   config.port = doc["port"] | 2731;
@@ -63,7 +63,7 @@ void saveConfiguration(const char* filename, const Config& config) {
   // Open file for writing
   File file = SD.open(filename, FILE_WRITE);
   if (!file) {
-    Serial.println(F("Failed to create file"));
+    USBSerial.println(F("Failed to create file"));
     return;
   }
 
@@ -76,27 +76,27 @@ void saveConfiguration(const char* filename, const Config& config) {
 
   // Serialize JSON to file
   if (serializeJson(doc, file) == 0) {
-    Serial.println(F("Failed to write to file"));
+    USBSerial.println(F("Failed to write to file"));
   }
 
   // Close the file
   file.close();
 }
 
-// Prints the content of a file to the Serial
+// Prints the content of a file to the USBSerial
 void printFile(const char* filename) {
   // Open file for reading
   File file = SD.open(filename);
   if (!file) {
-    Serial.println(F("Failed to read file"));
+    USBSerial.println(F("Failed to read file"));
     return;
   }
 
   // Extract each characters by one by one
   while (file.available()) {
-    Serial.print((char)file.read());
+    USBSerial.print((char)file.read());
   }
-  Serial.println();
+  USBSerial.println();
 
   // Close the file
   file.close();
@@ -104,27 +104,27 @@ void printFile(const char* filename) {
 
 void setup() {
   // Initialize serial port
-  Serial.begin(9600);
-  while (!Serial)
+  USBSerial.begin(9600);
+  while (!USBSerial)
     continue;
 
   // Initialize SD library
   const int chipSelect = 4;
   while (!SD.begin(chipSelect)) {
-    Serial.println(F("Failed to initialize SD library"));
+    USBSerial.println(F("Failed to initialize SD library"));
     delay(1000);
   }
 
   // Should load default config if run for the first time
-  Serial.println(F("Loading configuration..."));
+  USBSerial.println(F("Loading configuration..."));
   loadConfiguration(filename, config);
 
   // Create configuration file
-  Serial.println(F("Saving configuration..."));
+  USBSerial.println(F("Saving configuration..."));
   saveConfiguration(filename, config);
 
   // Dump config file
-  Serial.println(F("Print config file..."));
+  USBSerial.println(F("Print config file..."));
   printFile(filename);
 }
 

@@ -11,8 +11,8 @@
 
 void setup() {
   // Initialize serial port
-  Serial.begin(9600);
-  while (!Serial)
+  USBSerial.begin(9600);
+  while (!USBSerial)
     continue;
 
   // Allocate the JSON document
@@ -35,8 +35,8 @@ void setup() {
 
   // Test if parsing succeeded
   if (error) {
-    Serial.print("deserializeMsgPack() failed: ");
-    Serial.println(error.f_str());
+    USBSerial.print("deserializeMsgPack() failed: ");
+    USBSerial.println(error.f_str());
     return;
   }
 
@@ -50,10 +50,10 @@ void setup() {
   double longitude = doc["data"][1];
 
   // Print the values
-  Serial.println(sensor);
-  Serial.println(time);
-  Serial.println(latitude, 6);
-  Serial.println(longitude, 6);
+  USBSerial.println(sensor);
+  USBSerial.println(time);
+  USBSerial.println(latitude, 6);
+  USBSerial.println(longitude, 6);
 }
 
 void loop() {
