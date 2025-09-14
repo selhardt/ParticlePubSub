@@ -2,8 +2,6 @@
 #include <globals.h>
 
 extern int relayPins[];
-//extern unsigned long lastHeartbeat;
-//extern const unsigned long heartbeatInterval;
 extern volatile unsigned long pulseCount;
 
 extern int currentRelay;
@@ -11,7 +9,6 @@ extern unsigned long requiredPulses;
 extern unsigned long timeoutDuration;
 
 extern unsigned long startTime;
-//extern bool ForceIrrigate;
 
 extern IrrigationState irrigationState;
 
@@ -26,15 +23,15 @@ extern bool particlePrint;
 extern float tempF;
 extern float humidity;
 
-extern int jobRelay[MAX_JOBS];
-extern int jobWaterQty[MAX_JOBS];
+extern int jobRelay[MAX_RELAY];
+extern int jobWaterQty[MAX_RELAY];
 
 extern int totalJobs;
 extern int currentJobIndex;
 extern bool jobsPending;
-extern String jobDevice;
 extern unsigned long lastStatusUpdate;
 extern bool jobJustStarted;
+extern String myZone;
 
 //Command Parser
 size_t readBufOffset = 0;
@@ -54,8 +51,9 @@ void stopIrrigation(){
     digitalWrite(relayPins[currentRelay], LOW);     //relay drive off
     pulseCount = 0;
     irrigationState = IDLE;
-    //ForceIrrigate = false;
-    printDebugMessage("✅ Stopping Water Dispense");
+    String myMsg = "✅ Stopping Water Dispense on relay: ";
+    myMsg += String(currentRelay + 1);
+    printDebugMessage(myMsg);
 }
 
 //Check for Command Line Commands
@@ -99,10 +97,14 @@ void handleTempSensorRead(const char *event, const char *data) {
         printDebugMessage("❌ Temp Sensor JSON Error");
         return;
     }
+    const char* targetZone = doc["zone"];
 
-    const char* targetDevice = doc["device"];
+    // USBSerial.print("target zone is ");
+    // USBSerial.println(String(targetZone));
+    // USBSerial.print("myZone is ");
+    // USBSerial.println(myZone);
 
-    if (!targetDevice || String(targetDevice) != System.deviceID()) {
+    if (String(targetZone) != myZone) {
         printDebugMessage("⚠️ Temp read ignored - device mismatchxxx");
         return;
     }
@@ -128,8 +130,8 @@ void handleTempSensorRead(const char *event, const char *data) {
     }
 
     snprintf(payload, sizeof(payload),
-        "{\"device\":\"%s\",\"tempF\":\"%.2f\",\"hum\":\"%.2f\"}",
-        System.deviceID().c_str(), tempF, humidity);
+        "{\"zone\":\"%s\",\"tempF\":\"%.2f\",\"hum\":\"%.2f\"}",
+        myZone.c_str(), tempF, humidity);
     Particle.publish("sensorData", payload, PRIVATE);
 
     USBSerial.print("dht error"); USBSerial.println(dht20Error);
@@ -151,32 +153,19 @@ void handleAbortEvent(const char *event, const char *data) {
         printDebugMessage("❌ Invalid abort JSON");
         return;
     }
+    const char* targetZone = doc["zone"];
 
-    const char* targetDevice = doc["device"];
-    if (!targetDevice || String(targetDevice) != System.deviceID()) {
-        //printDebugMessage("⚠️ Abort ignored - device mismatch");
+    if (String(targetZone) != myZone) {
+        printDebugMessage("⚠️ Abort ignored - device mismatch");
         return;
     }
 
     printDebugMessage("🛑 Aborting Irrigation Event");
     stopIrrigation();
 
-        //Set states for sequencing
-    if(System.deviceID() == FIRST){
-        irrigationState = IDLE;
-    }
-    else if(System.deviceID() == SECOND){
-        irrigationState = WAITING;
-    }
-    else if(System.deviceID() == THIRD){
-        irrigationState = WAITING;
-    }
 
 }
 
-// void handleForceIrrigationEvent(const char *event, const char *data){
-//     ForceIrrigate = true;
-// }
 
 void handleIrrigationEvent(const char *event, const char *data) {
     if (!data || strcmp(data, "[object Object]") == 0 || strcmp(data, "next") == 0) return;
@@ -188,9 +177,9 @@ void handleIrrigationEvent(const char *event, const char *data) {
     }
 
     //Check if message is for this deviceID
-    const char* target = doc["device"];
-    if (!target || strcmp(target, System.deviceID().c_str()) != 0) {
-        //printDebugMessage("⚠️ Irrigation event not for this device");
+    const char* targetZone = doc["zone"];
+    if (String(targetZone) != myZone) {
+        printDebugMessage("⚠️ Irrigation event not for this device");
         return;
     }
 
@@ -205,11 +194,11 @@ void handleIrrigationEvent(const char *event, const char *data) {
     String relayStr = doc["relay"] | "";
     String waterStr = doc["waterQty"] | "";
 
-    String relayParts[MAX_JOBS];
-    String waterParts[MAX_JOBS];
+    String relayParts[MAX_RELAY];
+    String waterParts[MAX_RELAY];
 
-    totalJobs = splitString(relayStr, relayParts, MAX_JOBS);
-    int waterCount = splitString(waterStr, waterParts, MAX_JOBS);
+    totalJobs = splitString(relayStr, relayParts, MAX_RELAY);
+    int waterCount = splitString(waterStr, waterParts, MAX_RELAY);
 
     if (waterCount != totalJobs) {
         printDebugMessage("❌ Mismatched job field lengths");
@@ -224,7 +213,6 @@ void handleIrrigationEvent(const char *event, const char *data) {
 
     currentJobIndex = 0;
     jobsPending = true;
-    jobDevice = target;
 
     //Trigger a temperature read once per Job set
     if (!dht20Error)
@@ -248,8 +236,8 @@ void handleIrrigationEvent(const char *event, const char *data) {
     char payload[256];
 
     snprintf(payload, sizeof(payload),
-    "{\"device\":\"%s\",\"tempF\":\"%.1f\",\"hum\":\"%.1f\"}",
-    System.deviceID().c_str(), tempF, humidity);
+    "{\"zone\":\"%s\",\"tempF\":\"%.1f\",\"hum\":\"%.1f\"}",
+    myZone.c_str(), tempF, humidity);
     Particle.publish("sensorData", payload, PRIVATE);
 
     startNextJob();
@@ -257,7 +245,7 @@ void handleIrrigationEvent(const char *event, const char *data) {
 
 void publishIrrigationStatus(const char* status) {
     JsonDocument doc;
-    doc["device"] = System.deviceID();
+    doc["zone"] = myZone;
     doc["relay"] = currentRelay + 1;
     doc["status"] = status;
     doc["waterQty"] = (round)((double)pulseCount / (660.0 * 3.78541));
@@ -277,8 +265,8 @@ void printDebugMessage(String msg) {
 
     // Build properly quoted JSON
     snprintf(debugText, maxLen,
-        "{\"device\":\"%s\",\"msg\":\"%s\"}",
-        System.deviceID().c_str(),
+        "{\"zone\":\"%s\",\"msg\":\"%s\"}",
+        myZone.c_str(),
         msg.c_str()
     );
 
@@ -317,26 +305,6 @@ void startNextJob() {
     int waterQty = jobWaterQty[currentJobIndex];
 
     Particle.process();
-    // System.deviceID()
-    // If mydeviceID is e00fce68db61e483e6b7a085, press on and start
-    // If mydeviceID is e00fce687edca63b21266dfc wait for e00fce68db61e483e6b7a085 to publish irrigation complete
-    // if mydeviceID is e00fce68195036200d338fb6 wait for e00fce687edca63b21266dfc to publish irrigatino complete
-
-    if(System.deviceID() == FIRST){             //First Job in queue - of to start
-        //nothing required
-    }
-    else if(System.deviceID() == SECOND){       //2nd Job in queue - wait for first to finish
-        if(irrigationState == WAITING){
-            printDebugMessage("❌ SECOND is WAITING");
-            return;
-        }
-    }
-    else if(System.deviceID() == THIRD){        //3rd Job in queue - wait for second to finish
-        if(irrigationState == WAITING){
-            printDebugMessage("❌ THIRD is WAITING");
-            return;
-        }
-    }
 
     if (currentJobIndex >= totalJobs)
     {
@@ -347,20 +315,8 @@ void startNextJob() {
 
         char payload[256];
         snprintf(payload, sizeof(payload),
-            "{\"device\":\"%s\",\"status\":\"%s\"}",
-            System.deviceID().c_str(), "jobs_complete");
-
-        //Need to set irrigation state to waiting if SECOND or THIRD are done
-
-        if(System.deviceID() == FIRST){
-            //irrigationState is set to IDLE by stopIrrigation()
-        }
-        else if(System.deviceID() == SECOND){       //Put state back to WAITING for next calendar event
-            irrigationState = WAITING;
-        }
-        else if(System.deviceID() == THIRD){        //Put state back to WAITING for next calendar event
-            irrigationState = WAITING;
-        }
+            "{\"zone\":\"%s\",\"status\":\"%s\"}",
+            myZone.c_str(), "jobs_complete");
 
         Particle.publish("jobStatus", payload, PRIVATE); // signals SECOND and THIRD devices to progress
         return;
@@ -383,52 +339,6 @@ void startNextJob() {
     publishIrrigationStatus("in_progress");
 }
 
-void handleIrrigationJobs(const char *event, const char *data){
-    //Each Device only publishes one "jobs_complete"
-
-    // printDebugMessage("HandleIrrigationJobs Fired");
-    // USBSerial.println("HandleIrrigationJobs Fired");
-
-    JsonDocument doc;
-    if (deserializeJson(doc, data)) {
-        printDebugMessage("❌ JSON parse error in irrigation jobs");
-        return;
-    }
-
-    const char* dev = doc["device"];
-    const char* status = doc["status"];
-
-    char payload[256];
-    serializeJson(doc, payload);
-    printDebugMessage(String::format("✅ handleIrrigationJobs Job status: %s", payload));
-
-    // USBSerial.print("device ID in HandleIrrigationJobs ");
-    // USBSerial.println(System.deviceID());
-
-    if(String(dev) == FIRST && String(status) == "jobs_complete"){
-
-        if (System.deviceID() == SECOND)
-        {
-            printDebugMessage("✅ FIRST is jobs_complete");
-            printDebugMessage("✅ ✅ ✅ Set 2nd Device to IDLE - should now start");
-            irrigationState = IDLE;             //Move SECOND to IDLE so that start next job runs and sets RUNNING
-            currentJobIndex = 0;                //reset the starting job index
-            startNextJob();                     
-            return;
-        }
-    }
-    if(String(dev) == SECOND && String(status) == "jobs_complete"){
-        if(System.deviceID() == THIRD){
-            printDebugMessage("✅ SECOND is jobs_complete");
-            printDebugMessage("✅ ✅ ✅ Set 3rd Device to IDLE - should now start");
-            irrigationState = IDLE;             //Move THIRD to IDLE so that start next job runs and sets RUNNING
-            currentJobIndex = 0;                //reset the starting job index
-            startNextJob();
-            return;
-        }
-    }
-
-}
 
 void processCommand( char inBuf[])
 {
@@ -479,6 +389,48 @@ if (output) digitalWrite(relayPins[6], HIGH);
 output = strstr(inBuf, "r7off");
 if (output) digitalWrite(relayPins[6], LOW);
 
+// Relay8
+output = strstr(inBuf, "r8on");
+if (output) digitalWrite(relayPins[7], HIGH);
+output = strstr(inBuf, "r8off");
+if (output) digitalWrite(relayPins[7], LOW);
+
+// Relay9
+output = strstr(inBuf, "r9on");
+if (output) digitalWrite(relayPins[8], HIGH);
+output = strstr(inBuf, "r9off");
+if (output) digitalWrite(relayPins[8], LOW);
+
+// Relay10
+output = strstr(inBuf, "r10on");
+if (output) digitalWrite(relayPins[9], HIGH);
+output = strstr(inBuf, "r10off");
+if (output) digitalWrite(relayPins[9], LOW);
+
+// Relay11
+output = strstr(inBuf, "r11on");
+if (output) digitalWrite(relayPins[10], HIGH);
+output = strstr(inBuf, "r11off");
+if (output) digitalWrite(relayPins[10], LOW);
+
+// Relay12
+output = strstr(inBuf, "r12on");
+if (output) digitalWrite(relayPins[11], HIGH);
+output = strstr(inBuf, "r12off");
+if (output) digitalWrite(relayPins[11], LOW);
+
+// Relay13
+output = strstr(inBuf, "r13on");
+if (output) digitalWrite(relayPins[12], HIGH);
+output = strstr(inBuf, "r13off");
+if (output) digitalWrite(relayPins[12], LOW);
+
+// Relay14
+output = strstr(inBuf, "r14on");
+if (output) digitalWrite(relayPins[13], HIGH);
+output = strstr(inBuf, "r14off");
+if (output) digitalWrite(relayPins[13], LOW);
+
 //All Relays
 output = strstr(inBuf, "allron");
 if (output){
@@ -492,52 +444,6 @@ if (output){
     digitalWrite(relayPins[i], LOW);
     }
 }
-
-#ifdef REV_C
-
-    // Relay8
-    output = strstr(inBuf, "r8on");
-    if (output) digitalWrite(relayPins[7], HIGH);
-    output = strstr(inBuf, "r8off");
-    if (output) digitalWrite(relayPins[7], LOW);
-
-    // Relay9
-    output = strstr(inBuf, "r9on");
-    if (output) digitalWrite(relayPins[8], HIGH);
-    output = strstr(inBuf, "r9off");
-    if (output) digitalWrite(relayPins[8], LOW);
-
-    // Relay10
-    output = strstr(inBuf, "r10on");
-    if (output) digitalWrite(relayPins[9], HIGH);
-    output = strstr(inBuf, "r10off");
-    if (output) digitalWrite(relayPins[9], LOW);
-
-    // Relay11
-    output = strstr(inBuf, "r11on");
-    if (output) digitalWrite(relayPins[10], HIGH);
-    output = strstr(inBuf, "r11off");
-    if (output) digitalWrite(relayPins[10], LOW);
-
-    // Relay12
-    output = strstr(inBuf, "r12on");
-    if (output) digitalWrite(relayPins[11], HIGH);
-    output = strstr(inBuf, "r12off");
-    if (output) digitalWrite(relayPins[11], LOW);
-
-    // Relay13
-    output = strstr(inBuf, "r13on");
-    if (output) digitalWrite(relayPins[12], HIGH);
-    output = strstr(inBuf, "r13off");
-    if (output) digitalWrite(relayPins[12], LOW);
-
-    // Relay14
-    output = strstr(inBuf, "r14on");
-    if (output) digitalWrite(relayPins[13], HIGH);
-    output = strstr(inBuf, "r14off");
-    if (output) digitalWrite(relayPins[13], LOW);
-#endif
-
 
 
 output = strstr(inBuf,"rts");	//Read Temp Sensor

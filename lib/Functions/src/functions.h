@@ -14,7 +14,6 @@ void printDebugMessage(String msg);
 void printDebugMessagef(const char *format, ...);
 int splitString(const String &input, String output[], int maxParts);
 void startNextJob();
-void handleIrrigationJobs(const char *event, const char *data);
 //void handleForceIrrigationEvent(const char *event, const char *data);
 
 void checkUSBSerial();
