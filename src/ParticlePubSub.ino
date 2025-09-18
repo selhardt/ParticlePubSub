@@ -41,6 +41,9 @@
 //  9/6/25      40          7 Relays rev C - fixed the MAX_RELAY I had hard coded as 7
 //  9/9/25                  Pushing this revision to github - need to change over to new sequencing
 //  9/9/25      41          Reverting back to Nodered Sequencing - this revision functions for all 3 zones and cloud works as well.
+//  9/14/25     42          Adding the master water vavle support
+//              43          Stuff trying to figure out why 5th Subscribe does not work
+//              44          Single Subscribe handler
 //                          
 //    
 //  *******************************************************************************************************************************************
@@ -72,18 +75,23 @@
 //  If Firmware rev is locked in Particle Dashboard - physical flash changes will revert to locked version creating havoc
 //
 //
+//  *******************************************************************************************************************************************
+//  WARNING!
+//  Particle allows only 4 Particle.Subscribes ! - Took 2 days to find this out
 
 //TODO
-//***************************************REV 41 Items******************************************************************************************
-//  remove all FIRST/SECON/THIRD references and rever to NR handled sequencing
-//  r̶e̶m̶o̶v̶e̶ W̶A̶I̶T̶I̶N̶G̶ a̶s̶ a̶ s̶t̶a̶t̶e̶
-//  r̶e̶m̶o̶v̶e̶ j̶o̶b̶s̶t̶a̶t̶u̶s̶ s̶u̶b̶s̶c̶r̶i̶b̶e̶
-//  c̶h̶a̶n̶g̶e̶ t̶o̶ a̶ t̶o̶t̶a̶l̶ o̶f̶ 1̶4̶ r̶e̶l̶a̶y̶s̶ a̶n̶d̶ r̶e̶m̶o̶v̶e̶ 7̶/̶1̶4̶ o̶p̶t̶i̶o̶n̶
-//  r̶e̶p̶l̶a̶c̶e̶ M̶A̶X̶_̶J̶O̶B̶S̶ (̶w̶a̶s̶ 8̶)̶ w̶i̶t̶h̶ M̶A̶X̶_̶R̶E̶L̶A̶Y̶ (̶m̶a̶y̶b̶e̶ s̶h̶o̶u̶l̶d̶ b̶e̶ +̶1̶)̶
-//  c̶o̶n̶v̶e̶r̶t̶ a̶l̶l̶ d̶e̶v̶i̶c̶e̶I̶D̶'̶s̶ t̶o̶ m̶y̶Z̶o̶n̶e̶ n̶a̶m̶e̶
+//***************************************REV 44 Items******************************************************************************************
 //  Reduce debug prints and fix any old device ID mapping in NR
+//  Implement an Error or Notify Node on NR that the bebug prints that are bad report on
+//      -Leaking Flow
+//      -Se̶n̶s̶o̶r̶ n̶o̶ c̶o̶n̶n̶e̶c̶t̶
+//      -̶B̶a̶d̶ J̶S̶O̶N̶s̶
+//      -Others?
+//      -add a notify publish if the gallon value is above a certain amount in readFlow
+//      -decide how to clear the leakflow variable? Separate call?
+//TODO so this is going to increment on ZONE2 and ZONE3 jobs - hmm needs more thought
+//leakingPulseCount++;
 //****************************************BUGS*************************************************************************************************
-
 
 #include "Particle.h"
 #include "ArduinoJson.h"
@@ -92,21 +100,23 @@
 #include <Wire.h>
 
 //This must be directly programmed once prior to OTA updates
-PRODUCT_VERSION(41); // Increment this with each new upload
-
-// Designate GPIO pins
-// GPIO pin for flow sensor
-const int flowPin = D2;
+PRODUCT_VERSION(44); // Increment this with each new upload
 
 // Irrigation state and Tracking Variables
 int currentRelay = -1;
-unsigned long requiredPulses = 0;
-unsigned long pulseCount = 0;
+unsigned long requiredPulses = 0;           //number of required pulses for dispense job
+unsigned long pulseCount = 0;               //flow pulse count used for dispense job
+unsigned long leakingPulseCount = 0;        //count flow pulses while no irrigation job is running
 unsigned long startTime = 0;
 unsigned long timeoutDuration = 0;
 unsigned long lastPulseTime = 0;
 
 IrrigationState irrigationState = IDLE;
+
+
+// Designate GPIO pins
+// GPIO pin for flow sensor
+const int flowPin = D2;
 
 // Relays - SEE GLOBALS FOR MAX RELAY
 //int relayPins[MAX_RELAY] = {D8, D7, D6, D5, A0, A1, A2}; // Rev B
@@ -117,7 +127,7 @@ int jobRelay[MAX_RELAY];
 int jobWaterQty[MAX_RELAY];
 int totalJobs = 0;
 int currentJobIndex = 0;
-bool jobsPending = false;
+//bool jobsPending = false;   //TODO nothing checks this variable
 bool jobJustStarted = false;
 
 // Flow Variables
@@ -125,8 +135,6 @@ const unsigned long noFlowThreshold = 30000; // 30 seconds without pulses to all
 
 // Temperature Sensor
 bool dht20Error = false;
-float tempF = 0.0;
-float humidity = 0.0;
 
 // Debug Print Enable or Disable
 bool debugPrint = true;
@@ -135,6 +143,7 @@ bool particlePrint = true;
 //Device Zone Mapping
 String myZone;
 
+//Status update loop timing
 unsigned long lastStatusUpdate = 0;
 const unsigned long statusInterval = 300000; // every 5 minutes
 
@@ -148,11 +157,14 @@ void pulseISR()
 {
     // Only count pulses if the state is RUNNING
     // This flow sensor will run on 2nd and 3rd system in series so don't count those
-    // If it is counting and no other systems are irrigating - could be a leak?
     if (irrigationState == RUNNING)
     { // Count Flow only if RUNNING
         pulseCount++;
         lastPulseTime = millis();
+    } else {
+        //Zeroed on Read - probably should have a separate clear
+        //TODO so this is going to increment on ZONE2 and ZONE3 jobs - hmm needs more thought
+        leakingPulseCount++;
     }
 }
 
@@ -160,7 +172,6 @@ void setup() {
     Wire.begin();
     USBSerial.begin(9600);
     waitFor(USBSerial.isConnected, 10000);
-
     Particle.connect();
     waitUntil(Particle.connected);
     //printDebugMessage("✅ Particle cloud connected");
@@ -172,6 +183,9 @@ void setup() {
         myZone = "ZONE2";
     }else if(System.deviceID() == "e00fce68195036200d338fb6"){
         myZone = "ZONE3";
+    //}else if (System.deviceID() == "e00fce68f20c968df59370c6"){
+    }else if (System.deviceID() == "e00fce6802f288257e9418c6"){
+        myZone = "ZONE4";
     }
 
     // Set relay pins as outputs and turn off initially
@@ -179,12 +193,17 @@ void setup() {
         pinMode(relayPins[i], OUTPUT);
         digitalWrite(relayPins[i], LOW);
     }
+    enableMasterValve();  //Turn on Master Valve
+
     // Set up pulse input
     pinMode(flowPin, INPUT_PULLUP);
     attachInterrupt(flowPin, pulseISR, FALLING);
 
+    //buffer used in printdebug message
     memset(debugText, 0, sizeof(debugText));
 
+
+    //connect DHT20 temp/humidity sensor
     if(dht.begin()){
         dht20Error = false;
         USBSerial.println("✅ DHT20 connected - yay");
@@ -194,50 +213,44 @@ void setup() {
         USBSerial.println("❌ DHT20 connect error - poop");
     }
 
-    if (!dht20Error) {
-        int status = dht.read();
-        if(status == DHT20_OK){
-            tempF = (dht.getTemperature() * 9.0 / 5.0) + 32.0;
-            humidity = dht.getHumidity();
-        }
-        else{
-            USBSerial.println(status);
-            USBSerial.println("❌ DHT20 read error - poop");
-            tempF = 999.0;
-            humidity = 999.0;
-        }
-    } else {
-        tempF = 999.0;
-        humidity = 999.0;
-    }
+    //Trigger a temperature read TODO - need this?
+    double tempF;
+    double humidity;
+    const char *zone = myZone.c_str();
 
-    char payload[256];
-    snprintf(payload, sizeof(payload),
-    "tempF: %.1f, hum: %.1f%%",
-    tempF, humidity);
-    USBSerial.println(payload);
+    readTemp(zone, tempF, humidity);
+    char out[192];
+    snprintf(out, sizeof(out),
+      "{\"ok\":true,\"zone\":\"%s\",\"sensor\":\"temp\",\"temp\":%.2f,\"humidity\":%.2f}",
+      zone, tempF, humidity);
+    Particle.publish("resp/sensor", out, PRIVATE);
+    USBSerial.println(out);
+
 
     //Particle Functions
+    //Reboot the Particle
     Particle.function("reboot", resetBoron);
-
-    //Particle.function("stepperRotations", stepperRotations);
-
-    // Subscribe to cloud messages
-    // Main Irrigation Event
-    Particle.subscribe("irrigate", handleIrrigationEvent);
-    // Activates Temperature read from cloud
-    Particle.subscribe("read_sensors", handleTempSensorRead);
-    // Abort Irrigation
-    Particle.subscribe("abortIrrigate", handleAbortEvent);
-    // Announce being up
-    //printDebugMessage("✅ Ready for irrigation events :-)");
-    //Function on Particle dashboard to handle general commands
+    //Parses CLI commands - the same as the serial port
 	Particle.function("CMD Write", consoleCmd);
+
+    // Particle Subscribes
+    // Handle the Main irrigation watering events
+    //Particle.subscribe("irrigate", handleIrrigationEvent);
+    // Read Temperature and Jumidity
+    //Particle.subscribe("read_sensors", handleTempSensorRead);
+    // Abort Irrigation in Progress
+    //Particle.subscribe("abortIrrigate", handleAbortEvent);
+    // Enable/Disable Master Water Valve
+    //Particle.subscribe("master_valve", handleMasterValveEvent);
+    Particle.subscribe("cmd/", onCmd);
+
+    // Announce being up
+    // printDebugMessage("✅ Ready for irrigation events :-)");
 
     //Print firmware rev at start
     USBSerial.print("firmware_version"); USBSerial.println(String::format(": %d", __system_product_version));
-
-
+    USBSerial.print("Device ID "); USBSerial.println(System.deviceID());
+    USBSerial.print("ZONE "); USBSerial.println(myZone);
 }
 
 void loop() {
