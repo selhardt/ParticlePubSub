@@ -48,15 +48,35 @@
 //  9/9/25      41          Reverting back to Nodered Sequencing - this revision functions for all 3 zones and cloud works as well.
 //  9/14/25     42          Adding the master water vavle support
 //              43          Stuff trying to figure out why 5th Subscribe does not work
-//              44          Single Subscribe handler
+//              44          Single Subscribe handler - working and archived as stable with NR version 44
+//  9/18/25     45          Added mvo and mvc to command parser for master valve open and close
+//              46          Got rid of Not My zone messages - new baseline
+//              47          Set Master Valve back to ZONE1
+//              48          Commented out temp read at boot
+//                          Don't need flow leak with master valve
+//                          Commented out LeakingPulseCount
+//                          Commented out readFlow
+//                          To use rxon - must open master valve mvo on ZONE1 first
+//                          Got rid of allron and allroff
+//              49          Added Heartbeat
+//  10/27/25    50          Commented out Stopping Water Dispense
+//  10/30/25    51          Removing heartbeat - NR got too complex detecting a device that did not start
+//  11/3/25     52          Added read Flow Particle variable
+//                          Lengthened timeout for no_flow from 30sec to 60 sec (ZONE3 was timing out with no_flow)
+//              53          Turned irrigation_stats back on
+//              54          Pointing old irrigation_status to publish on jobStatus
+//
 //                          
 //    
 //  *******************************************************************************************************************************************
 //  Names for Devices at bottom of screen for direct flash
-//  Name in VS Code             deviceID                        Relay Number            Relay Name
-//  Pool_Fruit_Trees            e00fce68db61e483e6b7a085        1,2,3,4,5,6,7           Fig,Orange,LizLemon,MeyerLemon,3Bells,2Bells,Vitex
-//  Pool_Palms_and_Flowers      e00fce687edca63b21266dfc        1,2,3,4,5,6,7           Palm1,Palm2,BirdParadise,3Lantana,SmallPalm,BigPalmSteps,RosataPalm
-//  ZONE3                       e00fce68195036200d338fb6        1,2,3,4,5,6,7           Tangelo,4Lantana,GarageMesquite,Ironwood,WestMesquite,MiddleMesquite,EastMesquite
+//  Update in NR Node flow.zoneRelayMap = { ZONE1..4 }
+//
+//  Name in VS Code     deviceID                        Relay Number            Relay Name
+//  ZONE1               e00fce68db61e483e6b7a085        1,2,3,4,5,6,7,8,9,10    fig,orange,lizlemon,meyerlemon,3bells,2bells,vitex,pool,mastervalve,zengarden
+//  ZONE2               e00fce687edca63b21266dfc        1,2,3,4,5,6,7           maturepalm,newpalm,birdparadise,3lantana,smallpalmandtree,bigpalmtxranger,rosatatxranger
+//  ZONE3               e00fce68195036200d338fb6        1,2,3,4,5,6,7,8,9       tangelo,4lantana,garagemesquite,ironwood,westmesquite,middlemesquite,eastmesquite,eofironwood,eofemesquitte
+//  ZONE4               e00fce6802f288257e9418c6
 //                      
 //  *******************************************************************************************************************************************
 // Strikeout CmdK - release, then press delete
@@ -85,46 +105,9 @@
 //  Particle allows only 4 Particle.Subscribes ! - Took 2 days to find this out
 
 //TODO
-//***************************************REV 44 Items******************************************************************************************
-//  Reduce debug prints and fix any old device ID mapping in NR
-//  Implement an Error or Notify Node on NR that the bebug prints that are bad report on
-//      -Leaking Flow
-//      -Se̶n̶s̶o̶r̶ n̶o̶ c̶o̶n̶n̶e̶c̶t̶
-//      -̶B̶a̶d̶ J̶S̶O̶N̶s̶
-//      -Others?
-//      -add a notify publish if the gallon value is above a certain amount in readFlow
-//      -decide how to clear the leakflow variable? Separate call?
-//TODO so this is going to increment on ZONE2 and ZONE3 jobs - hmm needs more thought
-//leakingPulseCount++;
-//****************************************BUGS*************************************************************************************************
-// Reading Temp or flow during irrigation seems to result in 3 events???
-// Could these be the other zones?
-//
-// 9/16/2025, 4:52:25 PMnode: to Single Subscribe
-// msg.payload : string[32]
-// "{"zone":"ZONE4","sensor":"temp"}"
-// 9/16/2025, 4:52:26 PMnode: Sensor Messages
-// msg.payload : string[74]
-// "{"ok":true,"zone":"ZONE4","sensor":"temp","temp":999.00,"humidity":999.00}"
-// 9/16/2025, 4:52:26 PMnode: Sensor Messages
-// msg.payload : string[72]
-// "{"ok":true,"zone":"ZONE4","sensor":"temp","temp":79.24,"humidity":45.57}"
-// 9/16/2025, 4:52:27 PMnode: Sensor Messages
-// msg.payload : string[74]
-// "{"ok":true,"zone":"ZONE4","sensor":"temp","temp":999.00,"humidity":999.00}"
+//***************************************REV 48 Items******************************************************************************************
 
-// 9/16/2025, 4:53:09 PMnode: to Single Subscribe
-// msg.payload : string[32]
-// "{"zone":"ZONE4","sensor":"flow"}"
-// 9/16/2025, 4:53:09 PMnode: Sensor Messages
-// msg.payload : string[54]
-// "{"ok":true,"zone":"ZONE4","sensor":"flow","gallons":0}"
-// 9/16/2025, 4:53:10 PMnode: Sensor Messages
-// msg.payload : string[54]
-// "{"ok":true,"zone":"ZONE4","sensor":"flow","gallons":0}"
-// 9/16/2025, 4:53:11 PMnode: Sensor Messages
-// msg.payload : string[54]
-// "{"ok":true,"zone":"ZONE4","sensor":"flow","gallons":0}"
+//****************************************BUGS*************************************************************************************************
 
 #include "Particle.h"
 #include "ArduinoJson.h"
@@ -136,14 +119,14 @@
 void pulseISR();
 void setup();
 void loop();
-#line 131 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
-PRODUCT_VERSION(44); // Increment this with each new upload
+#line 114 "/Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/src/ParticlePubSub.ino"
+PRODUCT_VERSION(54); // Increment this with each new upload
 
 // Irrigation state and Tracking Variables
 int currentRelay = -1;
 unsigned long requiredPulses = 0;           //number of required pulses for dispense job
 unsigned long pulseCount = 0;               //flow pulse count used for dispense job
-unsigned long leakingPulseCount = 0;        //count flow pulses while no irrigation job is running
+unsigned long ParticleFlow = 0;
 unsigned long startTime = 0;
 unsigned long timeoutDuration = 0;
 unsigned long lastPulseTime = 0;
@@ -156,8 +139,7 @@ IrrigationState irrigationState = IDLE;
 const int flowPin = D2;
 
 // Relays - SEE GLOBALS FOR MAX RELAY
-//int relayPins[MAX_RELAY] = {D8, D7, D6, D5, A0, A1, A2}; // Rev B
-int relayPins[MAX_RELAY] = {A0, A1, A2, A3, D11, D4, D3, D8, A4, A5, D13, D12, D10, D9}; //Rev C
+int relayPins[MAX_RELAY] = {A0, A1, A2, A3, D11, D4, D3, D8, A4, A5, D13, D12, D10, D9}; // Rev C
 
 // Job Iteration
 int jobRelay[MAX_RELAY];
@@ -168,7 +150,7 @@ int currentJobIndex = 0;
 bool jobJustStarted = false;
 
 // Flow Variables
-const unsigned long noFlowThreshold = 30000; // 30 seconds without pulses to allow for valve to open fully
+const unsigned long noFlowThreshold = 60000; // 60 seconds without pulses to allow for valve to open fully
 
 // Temperature Sensor
 bool dht20Error = false;
@@ -198,11 +180,7 @@ void pulseISR()
     { // Count Flow only if RUNNING
         pulseCount++;
         lastPulseTime = millis();
-    } else {
-        //Zeroed on Read - probably should have a separate clear
-        //TODO so this is going to increment on ZONE2 and ZONE3 jobs - hmm needs more thought
-        leakingPulseCount++;
-    }
+    } 
 }
 
 void setup() {
@@ -220,7 +198,6 @@ void setup() {
         myZone = "ZONE2";
     }else if(System.deviceID() == "e00fce68195036200d338fb6"){
         myZone = "ZONE3";
-    //}else if (System.deviceID() == "e00fce68f20c968df59370c6"){
     }else if (System.deviceID() == "e00fce6802f288257e9418c6"){
         myZone = "ZONE4";
     }
@@ -230,7 +207,6 @@ void setup() {
         pinMode(relayPins[i], OUTPUT);
         digitalWrite(relayPins[i], LOW);
     }
-    enableMasterValve();  //Turn on Master Valve
 
     // Set up pulse input
     pinMode(flowPin, INPUT_PULLUP);
@@ -238,7 +214,6 @@ void setup() {
 
     //buffer used in printdebug message
     memset(debugText, 0, sizeof(debugText));
-
 
     //connect DHT20 temp/humidity sensor
     if(dht.begin()){
@@ -250,39 +225,31 @@ void setup() {
         USBSerial.println("❌ DHT20 connect error - poop");
     }
 
+
     //Trigger a temperature read TODO - need this?
-    double tempF;
-    double humidity;
-    const char *zone = myZone.c_str();
+    //double tempF;
+    //double humidity;
+    //const char *zone = myZone.c_str();
 
-    readTemp(zone, tempF, humidity);
-    char out[192];
-    snprintf(out, sizeof(out),
-      "{\"ok\":true,\"zone\":\"%s\",\"sensor\":\"temp\",\"temp\":%.2f,\"humidity\":%.2f}",
-      zone, tempF, humidity);
-    Particle.publish("resp/sensor", out, PRIVATE);
-    USBSerial.println(out);
+    // Commented out 10/23/25
+    // readTemp(zone, tempF, humidity);
+    // char out[192];
+    // snprintf(out, sizeof(out),
+    //   "{\"ok\":true,\"zone\":\"%s\",\"sensor\":\"temp\",\"temp\":%.2f,\"humidity\":%.2f}",
+    //   zone, tempF, humidity);
+    // Particle.publish("resp/sensor", out, PRIVATE);
+    // USBSerial.println(out);
 
+    //Particle Variable
+    Particle.variable("Flow", ParticleFlow);
 
     //Particle Functions
     //Reboot the Particle
     Particle.function("reboot", resetBoron);
     //Parses CLI commands - the same as the serial port
 	Particle.function("CMD Write", consoleCmd);
-
     // Particle Subscribes
-    // Handle the Main irrigation watering events
-    //Particle.subscribe("irrigate", handleIrrigationEvent);
-    // Read Temperature and Jumidity
-    //Particle.subscribe("read_sensors", handleTempSensorRead);
-    // Abort Irrigation in Progress
-    //Particle.subscribe("abortIrrigate", handleAbortEvent);
-    // Enable/Disable Master Water Valve
-    //Particle.subscribe("master_valve", handleMasterValveEvent);
     Particle.subscribe("cmd/", onCmd);
-
-    // Announce being up
-    // printDebugMessage("✅ Ready for irrigation events :-)");
 
     //Print firmware rev at start
     USBSerial.print("firmware_version"); USBSerial.println(String::format(": %d", __system_product_version));

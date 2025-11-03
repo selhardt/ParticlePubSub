@@ -17,13 +17,11 @@ void startNextJob();
 void checkUSBSerial();
 void processCommand(char inBuf[]);
 
-void disableMasterValve();
-void enableMasterValve();
+void closeMasterValve();
+void openMasterValve();
 void handleMasterValveEvent(const char *event, const char *data);
 
-//Rev 43 Changes
 bool readTemp(const char* zone, double& tempF, double& humidity);
-bool readFlow(const char* zone, int& gallons);
 void onCmd(const char *event, const char *data);
 void handleSensorRequest(const char *data);
 

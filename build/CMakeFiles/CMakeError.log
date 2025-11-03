@@ -159,3 +159,256 @@ Run Build Command(s):/usr/bin/make -f Makefile cmTC_e51d0/fast && You have not a
 
 
 
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-U5Mzy6
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_fd707/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-csW65l
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_78e4b/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-EUGq71
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_eb374/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-n812Zf
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_d47e5/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-fNBQqc
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_286f7/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-0cgjg0
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_5be10/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-1hyHm3
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_08848/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-EJb7yw
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_5640d/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-BFjTOA
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_0aee0/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-ElRlAD
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_9547b/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-6XshjW
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_49013/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-sY6UbB
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_252de/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-UjSZ6C
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_091dd/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-N4kR3n
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_dd355/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-Mw4oux
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_ff5dd/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-AhXXM1
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_763ed/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-h4qBuj
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_3fd3a/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-0OzfhL
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_e7881/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-NsH4xf
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_e71bc/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-lrehW4
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_da732/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the C compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Checking whether the CXX compiler is IAR using "" did not match "IAR .+ Compiler":
+You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-bUCxA3
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_e652a/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /Users/scottelhardt/Documents/TreeWateringProject/Particle_Pub_Sub/ParticlePubSub/build/CMakeFiles/CMakeScratch/TryCompile-1mVxjj
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_9be4c/fast && You have not agreed to the Xcode license agreements. Please run 'sudo xcodebuild -license' from within a Terminal window to review and agree to the Xcode and Apple SDKs license.
+
+
+
